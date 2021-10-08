@@ -61,10 +61,10 @@ public class GiftCertificateValidator {
             }
         }
 
-        String name = fieldAndValueForUpdate.get("name");
-        String description = fieldAndValueForUpdate.get("description");
-        String priceString = fieldAndValueForUpdate.get("price");
-        String durationString = fieldAndValueForUpdate.get("duration");
+        String name = fieldAndValueForUpdate.get(NAME);
+        String description = fieldAndValueForUpdate.get(DESCRIPTION);
+        String priceString = fieldAndValueForUpdate.get(PRICE);
+        String durationString = fieldAndValueForUpdate.get(DURATION);
 
         Integer price = null;
         if (priceString != null) {

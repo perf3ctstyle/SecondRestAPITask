@@ -10,7 +10,6 @@ import com.epam.esm.exception.RequiredFieldMissingException;
 import com.epam.esm.exception.ResourceNotFoundException;
 import com.epam.esm.service.GiftCertificateService;
 import com.epam.esm.util.ControllerUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.hateoas.CollectionModel;
@@ -37,7 +36,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 /**
- * This is a class that represents the presentation layer of API and provides basic operations for manipulations with Gift Certificate entities.
+ * This is a class that represents the presentation layer of API and provides basic operations for manipulations with {@link GiftCertificate} entities.
  *
  * @author Nikita Torop
  */
@@ -66,8 +65,10 @@ public class GiftCertificateController {
     /**
      * Returns a {@link List} of {@link GiftCertificate} objects from a database.
      *
-     * @param searchInfo - info for search.
-     * @param tagNames   - the names of {@link Tag} object which are linked to the {@link GiftCertificate} objects.
+     * @param searchInfo - an object that contains the partial search and sorting info
+     * @param tagNames   - names of {@link Tag} objects which are linked to a {@link GiftCertificate} object.
+     * @param limit      - a number of {@link GiftCertificate} objects to return
+     * @param offset     - a number of {@link GiftCertificate} objects to skip when returning
      * @return {@link ResponseEntity} with a {@link HttpStatus} and a {@link List} of {@link GiftCertificate} objects or a {@link ErrorInfo} object.
      */
     @GetMapping(produces = JSON)
@@ -109,7 +110,7 @@ public class GiftCertificateController {
 
     /**
      * Creates a {@link GiftCertificate} object in a database or throws {@link RequiredFieldMissingException} if some fields
-     * required for creation are missing or {@link IllegalArgumentException} if the parameter object's price or duration values are lower than 0.
+     * required for creation are missing or throws {@link IllegalArgumentException} if the parameter object's price or duration values are lower than 0.
      *
      * @param giftCertificate - the {@link GiftCertificate} object that is to be created in a database.
      * @return {@link ResponseEntity} with a {@link HttpStatus} alone or additionally with a {@link ErrorInfo} object.
@@ -117,15 +118,32 @@ public class GiftCertificateController {
     @PostMapping(produces = JSON)
     public ResponseEntity<?> create(@RequestBody GiftCertificate giftCertificate) {
         giftCertificateService.create(giftCertificate);
-        return new ResponseEntity<>(giftCertificate, HttpStatus.CREATED);
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
+    /**
+     * Updates a {@link GiftCertificate} object in a database by its id or throws {@link ResourceNotFoundException} if the object
+     * with such id doesn't exist or throws {@link IllegalArgumentException} if the parameter object's price or duration values are lower than 0
+     * or if such field of {@link GiftCertificate} doesn't exist.
+     *
+     * @param id                     - the {@link GiftCertificate} object's id that is to be updated in a database.
+     * @param fieldAndValueForUpdate - the new values for updating a {@link GiftCertificate} object in a database.
+     * @return {@link ResponseEntity} with a {@link HttpStatus} alone or additionally with a {@link ErrorInfo} object.
+     */
     @PatchMapping(value = ID_PATH, produces = JSON)
     public ResponseEntity<?> updateById(@PathVariable long id, @RequestBody Map<String, String> fieldAndValueForUpdate) {
         giftCertificateService.updateById(id, fieldAndValueForUpdate);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    /**
+     * Updates a {@link GiftCertificate} object in a database by its id or throws {@link ResourceNotFoundException} if the object
+     * with such id doesn't exist or {@link IllegalArgumentException} if the parameter object's price or duration values are lower than 0.
+     *
+     * @param id              - the {@link GiftCertificate} object's id that is to be updated in a database.
+     * @param giftCertificate - the {@link GiftCertificate} object which has the new values for update in a database.
+     * @return {@link ResponseEntity} with a {@link HttpStatus} alone or additionally with a {@link ErrorInfo} object.
+     */
     @PutMapping(value = ID_PATH, produces = JSON)
     public ResponseEntity<?> updateById(@PathVariable long id, @RequestBody GiftCertificate giftCertificate) {
         giftCertificateService.updateById(id, giftCertificate);

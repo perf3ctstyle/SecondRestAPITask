@@ -1,12 +1,23 @@
 package com.epam.esm.hibernate;
 
+import com.epam.esm.entity.GiftCertificate;
+import com.epam.esm.entity.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This is a class that represents the persistence layer of API and also the Data Access Object(DAO) pattern.
+ * It provides basic operations for manipulations with a {@link GiftCertificate} and {@link Tag}
+ * shared table in a database.
+ *
+ * @author Nikita Torop
+ */
+@Repository
 public class GiftAndTagDao {
 
     private final EntityManager entityManager;
@@ -24,6 +35,12 @@ public class GiftAndTagDao {
         this.entityManager = entityManager;
     }
 
+    /**
+     * Returns a {@link List} of {@link Tag} ids which are connected to a certain {@link GiftCertificate}.
+     *
+     * @param certificateId - {@link GiftCertificate} id.
+     * @return a {@link List} of {@link Tag} ids.
+     */
     public List<Long> getTagIdsByCertificateId(long certificateId) {
         List<BigInteger> tagIds = entityManager
                 .createNativeQuery(GET_BY_CERTIFICATE_ID)
@@ -33,6 +50,12 @@ public class GiftAndTagDao {
         return toLong(tagIds);
     }
 
+    /**
+     * Returns a {@link List} of {@link GiftCertificate} ids which are connected to a certain {@link Tag}.
+     *
+     * @param tagId - {@link Tag} id.
+     * @return a {@link List} of {@link GiftCertificate} ids.
+     */
     public List<Long> getCertificateIdsByTagId(Long tagId) {
         List<BigInteger> certificateIds = entityManager
                 .createNativeQuery(GET_BY_TAG_ID)
@@ -42,6 +65,12 @@ public class GiftAndTagDao {
         return toLong(certificateIds);
     }
 
+    /**
+     * Creates a link between a {@link GiftCertificate} object and a {@link Tag} object.
+     *
+     * @param certificateId - {@link GiftCertificate} id.
+     * @param tagId - {@link Tag} id.
+     */
     public void create(Long certificateId, Long tagId) {
         entityManager
                 .createNativeQuery(CREATE)
@@ -50,6 +79,12 @@ public class GiftAndTagDao {
                 .executeUpdate();
     }
 
+    /**
+     * Deletes a link between a {@link GiftCertificate} object and a {@link Tag} object.
+     *
+     * @param certificateId - {@link GiftCertificate} id.
+     * @param tagId - {@link Tag} id.
+     */
     public void delete(Long certificateId, Long tagId) {
         entityManager
                 .createNativeQuery(DELETE)

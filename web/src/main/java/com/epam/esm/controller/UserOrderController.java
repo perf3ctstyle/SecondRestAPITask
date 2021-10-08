@@ -2,6 +2,7 @@ package com.epam.esm.controller;
 
 import com.epam.esm.constant.MessageSourceConstants;
 import com.epam.esm.entity.ErrorInfo;
+import com.epam.esm.entity.User;
 import com.epam.esm.entity.UserOrder;
 import com.epam.esm.exception.DaoException;
 import com.epam.esm.exception.RequiredFieldMissingException;
@@ -30,6 +31,11 @@ import java.util.Locale;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
+/**
+ * This is a class that represents an API and provides basic operations for manipulations with {@link UserOrder} entities.
+ *
+ * @author Nikita Torop
+ */
 @RestController
 @RequestMapping("/userOrder")
 public class UserOrderController {
@@ -52,6 +58,14 @@ public class UserOrderController {
         this.messageSource = messageSource;
     }
 
+    /**
+     * Returns a {@link List} of {@link UserOrder} objects from a database.
+     *
+     * @param userId - the {@link User} id whose {@link UserOrder} objects will be searched for.
+     * @param limit  - a number of {@link UserOrder} objects to return
+     * @param offset - a number of {@link UserOrder} objects to skip when returning
+     * @return {@link ResponseEntity} with a {@link HttpStatus} and a {@link List} of {@link User} objects.
+     */
     @GetMapping(produces = JSON)
     public ResponseEntity<?> getUserOrders(@RequestParam(required = false) Long userId,
                                            @RequestParam int limit,
@@ -74,6 +88,13 @@ public class UserOrderController {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
+    /**
+     * Returns a {@link UserOrder} object from a database by its id or throws {@link ResourceNotFoundException}
+     * if nothing is retrieved from a database or {@link DaoException} in the case of unexpected behaviour on a Dao level.
+     *
+     * @param id - the {@link UserOrder} object's id that is to be retrieved from a database.
+     * @return {@link ResponseEntity} with a {@link HttpStatus} and a {@link UserOrder} object or a {@link ErrorInfo} object.
+     */
     @GetMapping(value = ID_PATH, produces = JSON)
     public ResponseEntity<?> getById(@PathVariable(ID) long id) {
         UserOrder userOrder = userOrderService.getById(id);
@@ -82,12 +103,26 @@ public class UserOrderController {
         return new ResponseEntity<>(userOrder, HttpStatus.OK);
     }
 
+    /**
+     * Creates a {@link UserOrder} object in a database or throws {@link RequiredFieldMissingException} if some fields
+     * required for creation are missing.
+     *
+     * @param userOrder - the {@link UserOrder} object that is to be created in a database.
+     * @return {@link ResponseEntity} with a {@link HttpStatus} alone or additionally with a {@link ErrorInfo} object.
+     */
     @PostMapping(produces = JSON)
     public ResponseEntity<?> create(@RequestBody UserOrder userOrder) {
         userOrderService.create(userOrder);
-        return new ResponseEntity<>(userOrder, HttpStatus.CREATED);
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
+    /**
+     * Deletes a {@link UserOrder} object in a database by its id or throws {@link ResourceNotFoundException} if the object
+     * with such id doesn't exist.
+     *
+     * @param id - the {@link UserOrder} object's id that is to be deleted in a database.
+     * @return {@link ResponseEntity} with a {@link HttpStatus} alone or additionally with a {@link ErrorInfo} object.
+     */
     @DeleteMapping(value = ID_PATH, produces = JSON)
     public ResponseEntity<?> deleteById(@PathVariable(ID) long id) {
         userOrderService.delete(id);

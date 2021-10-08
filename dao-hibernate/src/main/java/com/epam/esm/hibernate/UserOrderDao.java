@@ -3,13 +3,21 @@ package com.epam.esm.hibernate;
 import com.epam.esm.constant.UserOrderConstants;
 import com.epam.esm.entity.UserOrder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
 import java.util.List;
 import java.util.Optional;
 
-public class UserOrderDao {
+/**
+ * This is a class that represents the persistence layer of API and also the Data Access Object(DAO) pattern.
+ * It provides basic operations for manipulations with {@link UserOrder} entities in a database.
+ *
+ * @author Nikita Torop
+ */
+@Repository
+public class UserOrderDao implements Dao<UserOrder> {
 
     private final EntityManager entityManager;
 
@@ -27,6 +35,13 @@ public class UserOrderDao {
         this.entityManager = entityManager;
     }
 
+    /**
+     * Returns {@link UserOrder} objects from a database without any filtering.
+     *
+     * @param limit  - a number of {@link UserOrder} objects to return
+     * @param offset - a number of {@link UserOrder} objects to skip when returning
+     * @return a {@link List} of {@link UserOrder} objects.
+     */
     public List<UserOrder> getAll(int limit, int offset) {
         return entityManager
                 .createNativeQuery(GET_ALL, UserOrder.class)
@@ -35,6 +50,14 @@ public class UserOrderDao {
                 .getResultList();
     }
 
+    /**
+     * Returns {@link UserOrder} objects from a database without any filtering of a particular {@link com.epam.esm.entity.User}.
+     *
+     * @param userId - {@link com.epam.esm.entity.User} id
+     * @param limit  - a number of {@link UserOrder} objects to return
+     * @param offset - a number of {@link UserOrder} objects to skip when returning
+     * @return a {@link List} of {@link UserOrder} objects.
+     */
     public List<UserOrder> getAllByUserId(long userId, int limit, int offset) {
         return entityManager
                 .createNativeQuery(GET_ALL_BY_USER_ID, UserOrder.class)
@@ -44,6 +67,13 @@ public class UserOrderDao {
                 .getResultList();
     }
 
+    /**
+     * Returns a {@link UserOrder} object from a database by its id or throws
+     * {@link javax.persistence.NonUniqueResultException} in the case of unexpected behaviour.
+     *
+     * @param id - the {@link UserOrder} object's id that is to be retrieved from a database.
+     * @return {@link Optional} with a {@link UserOrder} object if it was found in a database.
+     */
     public Optional<UserOrder> getById(long id) {
         UserOrder result = (UserOrder) entityManager
                 .createNativeQuery(GET_BY_ID, UserOrder.class)
@@ -53,6 +83,12 @@ public class UserOrderDao {
         return Optional.of(result);
     }
 
+    /**
+     * Creates a {@link UserOrder} object in a database.
+     *
+     * @param UserOrder - the {@link UserOrder} object that is to be created in a database.
+     * @return {@link UserOrder} object's id which was created in a database.
+     */
     public long create(UserOrder userOrder) {
         EntityTransaction transaction = entityManager.getTransaction();
 
@@ -69,6 +105,11 @@ public class UserOrderDao {
         return createdUserOrder.getId();
     }
 
+    /**
+     * Deletes a {@link UserOrder} object in a database by its id.
+     *
+     * @param id - the {@link UserOrder} object's id that is to be deleted in a database.
+     */
     public void delete(long id) {
         entityManager
                 .createNativeQuery(DELETE)

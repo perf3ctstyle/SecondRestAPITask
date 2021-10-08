@@ -1,13 +1,13 @@
 package com.epam.esm.service;
 
 import com.epam.esm.constant.GenericExceptionMessageConstants;
-import com.epam.esm.hibernate.TagDao;
 import com.epam.esm.dto.TagCostDto;
 import com.epam.esm.entity.Tag;
 import com.epam.esm.exception.DaoException;
 import com.epam.esm.exception.RequiredFieldMissingException;
 import com.epam.esm.exception.ResourceAlreadyExistsException;
 import com.epam.esm.exception.ResourceNotFoundException;
+import com.epam.esm.hibernate.TagDao;
 import com.epam.esm.validator.TagValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,9 +38,11 @@ public class TagService implements com.epam.esm.service.Service<Tag> {
     }
 
     /**
-     * Returns all {@link Tag} objects from a database.
+     * Returns {@link Tag} objects from a database without any filtering.
      *
-     * @return {@link List} of {@link Tag} objects.
+     * @param limit  - a number of {@link Tag} objects to return
+     * @param offset - a number of {@link Tag} objects to skip when returning
+     * @return a {@link List} of {@link Tag} objects.
      */
     public List<Tag> getAll(int limit, int offset) {
         checkPaginationParameters(limit, offset);
@@ -71,6 +73,13 @@ public class TagService implements com.epam.esm.service.Service<Tag> {
         return optionalTag.orElseThrow(() -> new ResourceNotFoundException(GenericExceptionMessageConstants.RESOURCE_NOT_FOUND, TAG));
     }
 
+    /**
+     * Returns the most widely used tag of {@link com.epam.esm.entity.User} with the highest cost of {@link com.epam.esm.entity.UserOrder}
+     * or throws {@link ResourceNotFoundException} if nothing is retrieved from a database.
+     *
+     * @param userId - the {@link com.epam.esm.entity.User} id whose orders are to be used for searching.
+     * @return {@link TagCostDto} object.
+     */
     public TagCostDto getMostWidelyUsedTagOfUserWithHighestCostOfOrders(long userId) {
         Optional<TagCostDto> optionalTagWithCost = tagDao.getMostWidelyUsedTagOfUserWithHighestCostOfOrders(userId);
         return optionalTagWithCost.orElseThrow(() -> new ResourceNotFoundException(GenericExceptionMessageConstants.RESOURCE_NOT_FOUND, TAG));
@@ -81,6 +90,7 @@ public class TagService implements com.epam.esm.service.Service<Tag> {
      * required for creation are missing or {@link ResourceAlreadyExistsException} if the tag with the same name already exists.
      *
      * @param tag - the {@link Tag} object that is to be created in a database.
+     * @return {@link Tag} object's id which was created in a database.
      */
     public long create(Tag tag) {
         tagValidator.validateForCreation(tag);
@@ -126,7 +136,7 @@ public class TagService implements com.epam.esm.service.Service<Tag> {
     }
 
     /**
-     * Returns {@link Tag} objects from a database by their id or {@link DaoException} in the case of unexpected behaviour
+     * Returns {@link Tag} objects from a database by their id or throws {@link DaoException} in the case of unexpected behaviour
      * on a Dao level.
      *
      * @param tagIds - the {@link Tag} objects ids that are to be retrieved from a database.

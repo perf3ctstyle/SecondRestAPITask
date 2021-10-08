@@ -33,7 +33,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 /**
- * This is a class that represents an API and provides basic operations for manipulations with Tag entities.
+ * This is a class that represents an API and provides basic operations for manipulations with {@link Tag} entities.
  *
  * @author Nikita Torop
  */
@@ -62,8 +62,10 @@ public class TagController {
     }
 
     /**
-     * Returns all {@link Tag} objects from a database.
+     * Returns {@link Tag} objects from a database without any filtering.
      *
+     * @param limit  - a number of {@link Tag} objects to return
+     * @param offset - a number of {@link Tag} objects to skip when returning
      * @return {@link ResponseEntity} with a {@link HttpStatus} and a {@link List} of {@link Tag} objects.
      */
     @GetMapping(produces = JSON)
@@ -81,8 +83,8 @@ public class TagController {
     }
 
     /**
-     * Returns a {@link Tag} object from a database by its id or throws {@link ResourceNotFoundException} if nothing is retrieved from a database
-     * or {@link DaoException} in the case of unexpected behaviour on a Dao level.
+     * Returns a {@link Tag} object from a database by its id or throws {@link ResourceNotFoundException}
+     * if nothing is retrieved from a database or {@link DaoException} in the case of unexpected behaviour on a Dao level.
      *
      * @param id - the {@link Tag} object's id that is to be retrieved from a database.
      * @return {@link ResponseEntity} with a {@link HttpStatus} and a {@link Tag} object or a {@link ErrorInfo} object.
@@ -95,6 +97,13 @@ public class TagController {
         return new ResponseEntity<>(tag, HttpStatus.OK);
     }
 
+    /**
+     * Returns the most widely used tag of {@link com.epam.esm.entity.User} with the highest cost of {@link com.epam.esm.entity.UserOrder}
+     * or throws {@link ResourceNotFoundException} if nothing is retrieved from a database.
+     *
+     * @param userId - the {@link com.epam.esm.entity.User} id whose orders are to be used for searching.
+     * @return {@link ResponseEntity} with a {@link HttpStatus} and a {@link Tag} object or a {@link ErrorInfo} object.
+     */
     @GetMapping(params = {USER_ID}, produces = JSON)
     public ResponseEntity<?> getMostWidelyUsedTagOfUserWithHighestCostOfOrders(@RequestParam long userId) {
         TagCostDto tagCostWithHighestCostOfUserOrders = tagService.getMostWidelyUsedTagOfUserWithHighestCostOfOrders(userId);
@@ -122,7 +131,7 @@ public class TagController {
     @PostMapping(produces = JSON)
     public ResponseEntity<?> create(@RequestBody Tag tag) {
         tagService.create(tag);
-        return new ResponseEntity<>(tag, HttpStatus.CREATED);
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     /**

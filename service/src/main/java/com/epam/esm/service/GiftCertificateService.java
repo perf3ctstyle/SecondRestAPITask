@@ -3,6 +3,7 @@ package com.epam.esm.service;
 import com.epam.esm.constant.GenericExceptionMessageConstants;
 import com.epam.esm.constant.GiftCertificateConstants;
 import com.epam.esm.constructor.GiftCertificateObjectConstructor;
+import com.epam.esm.entity.ErrorInfo;
 import com.epam.esm.hibernate.GiftAndTagDao;
 import com.epam.esm.hibernate.GiftCertificateDao;
 import com.epam.esm.dto.SearchInfoDto;
@@ -14,6 +15,8 @@ import com.epam.esm.exception.ResourceNotFoundException;
 import com.epam.esm.util.DateTimeUtils;
 import com.epam.esm.validator.GiftCertificateValidator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,6 +58,13 @@ public class GiftCertificateService implements com.epam.esm.service.Service<Gift
         this.giftCertificateObjectConstructor = giftCertificateObjectConstructor;
     }
 
+    /**
+     * Returns {@link GiftCertificate} objects from a database without any filtering.
+     *
+     * @param limit      - a number of {@link GiftCertificate} objects to return
+     * @param offset     - a number of {@link GiftCertificate} objects to skip when returning
+     * @return a {@link List} of {@link GiftCertificate} objects.
+     */
     public List<GiftCertificate> getAll(int limit, int offset) {
         checkPaginationParameters(limit, offset);
 
@@ -67,14 +77,16 @@ public class GiftCertificateService implements com.epam.esm.service.Service<Gift
     /**
      * Returns a {@link List} of {@link GiftCertificate} objects from a database.
      *
-     * @param searchInfoDto - info for search.
-     * @param tagNames - the names of {@link Tag} objects which are linked to the {@link GiftCertificate} objects.
-     * @return {@link List} of {@link GiftCertificate} objects.
+     * @param searchInfo - an object that contains the partial search and sorting info
+     * @param tagNames   - names of {@link Tag} objects which are linked to a {@link GiftCertificate} object.
+     * @param limit      - a number of {@link GiftCertificate} objects to return
+     * @param offset     - a number of {@link GiftCertificate} objects to skip when returning
+     * @return a {@link List} of {@link GiftCertificate} objects.
      */
-    public List<GiftCertificate> getGiftCertificates(SearchInfoDto searchInfoDto, String[] tagNames, int limit, int offset) {
+    public List<GiftCertificate> getGiftCertificates(SearchInfoDto searchInfo, String[] tagNames, int limit, int offset) {
         checkPaginationParameters(limit, offset);
 
-        SearchInfoDto searchInfoToUse = (searchInfoDto != null) ? searchInfoDto : new SearchInfoDto();
+        SearchInfoDto searchInfoToUse = (searchInfo != null) ? searchInfo : new SearchInfoDto();
         String[] tagNamesToUse = (tagNames != null) ? tagNames : new String[0];
 
         List<GiftCertificate> giftCertificates = giftCertificateDao.getGiftCertificates(searchInfoToUse, tagNamesToUse, limit, offset);
@@ -105,6 +117,7 @@ public class GiftCertificateService implements com.epam.esm.service.Service<Gift
      * required for creation are missing or {@link IllegalArgumentException} if the parameter object's price or duration values are lower than 0.
      *
      * @param giftCertificate - the {@link GiftCertificate} object that is to be created in a database.
+     * @return {@link GiftCertificate} object's id which was created in a database.
      */
     @Transactional
     public long create(GiftCertificate giftCertificate) {
@@ -130,7 +143,7 @@ public class GiftCertificateService implements com.epam.esm.service.Service<Gift
      * with such id doesn't exist or {@link IllegalArgumentException} if the parameter object's price or duration values are lower than 0.
      *
      * @param id              - the {@link GiftCertificate} object's id that is to be updated in a database.
-     * @param fieldAndValueForUpdate - the {@link GiftCertificate} object which has the new values for update in a database.
+     * @param fieldAndValueForUpdate - the new values for updating a {@link GiftCertificate} object in a database.
      */
     @Transactional
     public void updateById(long id, Map<String, String> fieldAndValueForUpdate) {
