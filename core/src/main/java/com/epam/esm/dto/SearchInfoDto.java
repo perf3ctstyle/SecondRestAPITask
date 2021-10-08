@@ -6,7 +6,7 @@ public class SearchInfoDto {
 
     private Map<String, String> fieldAndValueForPartialSearch;
     private String fieldForSorting;
-    private Boolean isAscending;
+    private Boolean ascending;
 
     public SearchInfoDto() {
     }
@@ -27,11 +27,11 @@ public class SearchInfoDto {
         return fieldForSorting;
     }
 
-    public void setIsAscending(Boolean isAscending) {
-        this.isAscending = isAscending;
+    public void setAscending(Boolean ascending) {
+        this.ascending = ascending;
     }
 
-    public Boolean getIsAscending() {
-        return isAscending;
+    public Boolean getAscending() {
+        return ascending;
     }
 }

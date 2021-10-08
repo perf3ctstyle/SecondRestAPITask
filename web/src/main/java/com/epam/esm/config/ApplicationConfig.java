@@ -1,14 +1,12 @@
 package com.epam.esm.config;
 
-import com.epam.esm.dao.GiftAndTagDao;
-import com.epam.esm.dao.TagDao;
-import com.epam.esm.dao.GiftCertificateDao;
-import com.epam.esm.dao.UserDao;
-import com.epam.esm.dao.UserOrderDao;
-import com.epam.esm.mapper.GiftCertificateRowMapper;
-import com.epam.esm.mapper.TagRowMapper;
-import com.epam.esm.mapper.UserOrderRowMapper;
-import com.epam.esm.mapper.UserRowMapper;
+import com.epam.esm.constructor.GiftCertificateObjectConstructor;
+import com.epam.esm.constructor.GiftCertificateQueryConstructor;
+import com.epam.esm.hibernate.GiftAndTagDao;
+import com.epam.esm.hibernate.GiftCertificateDao;
+import com.epam.esm.hibernate.TagDao;
+import com.epam.esm.hibernate.UserDao;
+import com.epam.esm.hibernate.UserOrderDao;
 import com.epam.esm.service.GiftCertificateService;
 import com.epam.esm.service.TagService;
 import com.epam.esm.service.UserOrderService;
@@ -32,7 +30,12 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
+import javax.persistence.PersistenceUnit;
 import javax.sql.DataSource;
 import java.nio.charset.StandardCharsets;
 
@@ -48,6 +51,18 @@ public class ApplicationConfig implements WebMvcConfigurer {
     private static final String LOCALE = "locale";
 
     @Bean
+    public LocalContainerEntityManagerFactoryBean localContainerEntityManagerFactoryBean() {
+        return new LocalContainerEntityManagerFactoryBean();
+    }
+
+    @Bean
+    public EntityManager entityManager(DataSource dataSource) {
+        LocalContainerEntityManagerFactoryBean localContainerEntityManagerFactoryBean = localContainerEntityManagerFactoryBean();
+        localContainerEntityManagerFactoryBean.setDataSource(dataSource);
+        return localContainerEntityManagerFactoryBean.createNativeEntityManager(null);
+    }
+
+    @Bean
     public JdbcTemplate jdbcTemplate(DataSource dataSource) {
         return new JdbcTemplate(dataSource);
     }
@@ -58,36 +73,17 @@ public class ApplicationConfig implements WebMvcConfigurer {
     }
 
     @Bean
-    public GiftCertificateRowMapper giftCertificateRowMapper() {
-        return new GiftCertificateRowMapper();
+    public GiftCertificateDao giftCertificateDao(EntityManager entityManager) {
+        return new GiftCertificateDao(entityManager, giftCertificateQueryConstructor());
     }
 
     @Bean
-    public TagRowMapper tagRowMapper() {
-        return new TagRowMapper();
-    }
-
-    @Bean
-    public UserRowMapper userRowMapper() {
-        return new UserRowMapper();
-    }
-
-    @Bean
-    public UserOrderRowMapper userOrderRowMapper() {
-        return new UserOrderRowMapper();
-    }
-
-    @Bean
-    public GiftCertificateDao giftCertificateDao(JdbcTemplate jdbcTemplate) {
-        return new GiftCertificateDao(jdbcTemplate, giftCertificateRowMapper());
-    }
-
-    @Bean
-    public GiftCertificateService giftCertificateService(JdbcTemplate jdbcTemplate) {
-        return new GiftCertificateService(giftCertificateDao(jdbcTemplate),
-                tagService(jdbcTemplate),
-                giftAndTagDao(jdbcTemplate),
-                giftCertificateValidator());
+    public GiftCertificateService giftCertificateService(EntityManager entityManager) {
+        return new GiftCertificateService(giftCertificateDao(entityManager),
+                tagService(entityManager),
+                giftAndTagDao(entityManager),
+                giftCertificateValidator(),
+                giftCertificateObjectConstructor());
     }
 
     @Bean
@@ -96,13 +92,13 @@ public class ApplicationConfig implements WebMvcConfigurer {
     }
 
     @Bean
-    public TagDao tagDao(JdbcTemplate jdbcTemplate) {
-        return new TagDao(jdbcTemplate, tagRowMapper());
+    public TagDao tagDao(EntityManager entityManager) {
+        return new TagDao(entityManager);
     }
 
     @Bean
-    public TagService tagService(JdbcTemplate jdbcTemplate) {
-        return new TagService(tagDao(jdbcTemplate), tagValidator());
+    public TagService tagService(EntityManager entityManager) {
+        return new TagService(tagDao(entityManager), tagValidator());
     }
 
     @Bean
@@ -111,23 +107,27 @@ public class ApplicationConfig implements WebMvcConfigurer {
     }
 
     @Bean
-    public UserDao userDao(JdbcTemplate jdbcTemplate) {
-        return new UserDao(jdbcTemplate, userRowMapper());
+    public UserDao userDao(EntityManager entityManager) {
+        return new UserDao(entityManager);
     }
 
     @Bean
-    public UserService userService(JdbcTemplate jdbcTemplate) {
-        return new UserService(userDao(jdbcTemplate));
+    public UserService userService(EntityManager entityManager) {
+        return new UserService(userDao(entityManager));
     }
 
     @Bean
-    public UserOrderDao userOrderDao(JdbcTemplate jdbcTemplate) {
-        return new UserOrderDao(jdbcTemplate, userOrderRowMapper());
+    public UserOrderDao userOrderDao(EntityManager entityManager) {
+        return new UserOrderDao(entityManager);
     }
 
     @Bean
-    public UserOrderService userOrderService(JdbcTemplate jdbcTemplate) {
-        return new UserOrderService(userOrderDao(jdbcTemplate), userOrderValidator(), userService(jdbcTemplate), giftCertificateService(jdbcTemplate));
+    public UserOrderService userOrderService(EntityManager entityManager) {
+        return new UserOrderService(
+                userOrderDao(entityManager),
+                userOrderValidator(),
+                userService(entityManager),
+                giftCertificateService(entityManager));
     }
 
     @Bean
@@ -136,8 +136,18 @@ public class ApplicationConfig implements WebMvcConfigurer {
     }
 
     @Bean
-    public GiftAndTagDao giftAndTagDao(JdbcTemplate jdbcTemplate) {
-        return new GiftAndTagDao(jdbcTemplate);
+    public GiftAndTagDao giftAndTagDao(EntityManager entityManager) {
+        return new GiftAndTagDao(entityManager);
+    }
+
+    @Bean
+    public GiftCertificateQueryConstructor giftCertificateQueryConstructor() {
+        return new GiftCertificateQueryConstructor();
+    }
+
+    @Bean
+    public GiftCertificateObjectConstructor giftCertificateObjectConstructor() {
+        return new GiftCertificateObjectConstructor();
     }
 
     @Bean(MESSAGE_SOURCE)

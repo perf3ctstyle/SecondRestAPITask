@@ -1,7 +1,7 @@
 package com.epam.esm.service;
 
 import com.epam.esm.constant.GenericExceptionMessageConstants;
-import com.epam.esm.dao.TagDao;
+import com.epam.esm.hibernate.TagDao;
 import com.epam.esm.dto.TagCostDto;
 import com.epam.esm.entity.Tag;
 import com.epam.esm.exception.DaoException;
@@ -11,9 +11,9 @@ import com.epam.esm.exception.ResourceNotFoundException;
 import com.epam.esm.validator.TagValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,10 +43,7 @@ public class TagService implements com.epam.esm.service.Service<Tag> {
      * @return {@link List} of {@link Tag} objects.
      */
     public List<Tag> getAll(int limit, int offset) {
-        if (limit < 0 || offset < 0) {
-            throw new IllegalArgumentException(GenericExceptionMessageConstants.NEGATIVE_VALUE_PROHIBITED);
-        }
-
+        checkPaginationParameters(limit, offset);
         return tagDao.getAll(limit, offset);
     }
 
@@ -75,12 +72,8 @@ public class TagService implements com.epam.esm.service.Service<Tag> {
     }
 
     public TagCostDto getMostWidelyUsedTagOfUserWithHighestCostOfOrders(long userId) {
-        List<TagCostDto> tagsWithCostSums = tagDao.getTagsWithCostSumsOfUserOrders(userId);
-
-        return tagsWithCostSums
-                .stream()
-                .max(Comparator.comparing(TagCostDto::getCostSum))
-                .orElseThrow(() -> new ResourceNotFoundException(GenericExceptionMessageConstants.RESOURCE_NOT_FOUND, TAG));
+        Optional<TagCostDto> optionalTagWithCost = tagDao.getMostWidelyUsedTagOfUserWithHighestCostOfOrders(userId);
+        return optionalTagWithCost.orElseThrow(() -> new ResourceNotFoundException(GenericExceptionMessageConstants.RESOURCE_NOT_FOUND, TAG));
     }
 
     /**
@@ -156,6 +149,7 @@ public class TagService implements com.epam.esm.service.Service<Tag> {
      *
      * @param id - the {@link Tag} object's id that is to be deleted in a database.
      */
+    @Transactional
     public void delete(long id) {
         Optional<Tag> optionalTag = tagDao.getById(id);
         optionalTag.orElseThrow(() -> new ResourceNotFoundException(GenericExceptionMessageConstants.RESOURCE_NOT_FOUND, TAG));

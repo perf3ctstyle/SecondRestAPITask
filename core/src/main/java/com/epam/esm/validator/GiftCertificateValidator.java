@@ -1,9 +1,13 @@
 package com.epam.esm.validator;
 
 import com.epam.esm.constant.GenericExceptionMessageConstants;
+import com.epam.esm.constant.GiftCertificateConstants;
 import com.epam.esm.entity.GiftCertificate;
 import com.epam.esm.exception.RequiredFieldMissingException;
 import org.apache.commons.lang3.StringUtils;
+
+import java.util.Map;
+import java.util.Set;
 
 public class GiftCertificateValidator {
 
@@ -44,9 +48,45 @@ public class GiftCertificateValidator {
         Integer price = giftCertificate.getPrice();
         Long duration = giftCertificate.getDuration();
 
+        validateNameAndDescription(name, description);
+        validatePriceAndDuration(price, duration);
+    }
+
+    public void validateForUpdate(Map<String, String> fieldAndValueForUpdate) {
+        Set<String> fieldNames = fieldAndValueForUpdate.keySet();
+
+        for (String fieldName : fieldNames) {
+            if (!GiftCertificateConstants.FIELDS.contains(fieldName)) {
+                throw new IllegalArgumentException(fieldName + GenericExceptionMessageConstants.SUCH_FIELD_DOES_NOT_EXIST);
+            }
+        }
+
+        String name = fieldAndValueForUpdate.get("name");
+        String description = fieldAndValueForUpdate.get("description");
+        String priceString = fieldAndValueForUpdate.get("price");
+        String durationString = fieldAndValueForUpdate.get("duration");
+
+        Integer price = null;
+        if (priceString != null) {
+            price = Integer.getInteger(priceString);
+        }
+
+        Long duration = null;
+        if (durationString != null) {
+            duration = Long.getLong(durationString);
+        }
+
+        validateNameAndDescription(name, description);
+        validatePriceAndDuration(price, duration);
+    }
+
+    private void validateNameAndDescription(String name, String description) {
         if (StringUtils.isWhitespace(name) || StringUtils.isWhitespace(description)) {
             throw new IllegalArgumentException(GenericExceptionMessageConstants.EMPTY_VALUE);
         }
+    }
+
+    private void validatePriceAndDuration(Integer price, Long duration) {
         if ((price != null && price <= 0) || (duration != null && duration <= 0))  {
             throw new IllegalArgumentException(GenericExceptionMessageConstants.NEGATIVE_VALUE_PROHIBITED);
         }

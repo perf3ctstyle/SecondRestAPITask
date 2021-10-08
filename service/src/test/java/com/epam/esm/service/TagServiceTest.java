@@ -1,10 +1,5 @@
 package com.epam.esm.service;
 
-import com.epam.esm.dao.TagDao;
-import com.epam.esm.entity.Tag;
-import com.epam.esm.exception.ResourceAlreadyExistsException;
-import com.epam.esm.exception.ResourceNotFoundException;
-import com.epam.esm.validator.TagValidator;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -18,7 +13,9 @@ import static org.mockito.Mockito.doNothing;
 
 public class TagServiceTest {
 
-    private final TagDao tagDao = Mockito.mock(TagDao.class);
+    // To be implemented
+
+    /*private final TagDao tagDao = Mockito.mock(TagDao.class);
     private final TagValidator tagValidator = Mockito.mock(TagValidator.class);
     private final TagService tagService = new TagService(tagDao, tagValidator);
 
@@ -138,5 +135,5 @@ public class TagServiceTest {
 
             tagService.delete(id);
         });
-    }
+    }*/
 }

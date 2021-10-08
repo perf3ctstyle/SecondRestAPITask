@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -74,7 +75,12 @@ public class GiftCertificateController {
                                                  @RequestParam(required = false) String[] tagNames,
                                                  @RequestParam int limit,
                                                  @RequestParam int offset) {
-        List<GiftCertificate> giftCertificates = getGiftCertificatesWithFilters(searchInfo, tagNames, limit, offset);
+        List<GiftCertificate> giftCertificates;
+        if (searchInfo == null) {
+            giftCertificates = giftCertificateService.getAll(limit, offset);
+        } else {
+            giftCertificates = giftCertificateService.getGiftCertificates(searchInfo, tagNames, limit, offset);
+        }
 
         for (GiftCertificate giftCertificate : giftCertificates) {
             addGenericGiftCertificateLinks(giftCertificate);
@@ -115,6 +121,12 @@ public class GiftCertificateController {
     }
 
     @PatchMapping(value = ID_PATH, produces = JSON)
+    public ResponseEntity<?> updateById(@PathVariable long id, @RequestBody Map<String, String> fieldAndValueForUpdate) {
+        giftCertificateService.updateById(id, fieldAndValueForUpdate);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping(value = ID_PATH, produces = JSON)
     public ResponseEntity<?> updateById(@PathVariable long id, @RequestBody GiftCertificate giftCertificate) {
         giftCertificateService.updateById(id, giftCertificate);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -163,30 +175,6 @@ public class GiftCertificateController {
                 messageSource.getMessage(MessageSourceConstants.INTERNAL_ERROR, null, locale),
                 DAO_EXCEPTION_CODE,
                 HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    private List<GiftCertificate> getGiftCertificatesWithFilters(SearchInfoDto searchInfo, String[] tagNames, int limit, int offset) {
-        Map<String, String> fieldAndValueForPartialSearch = null;
-        String fieldForSorting = null;
-        Boolean isAscending = null;
-
-        if (searchInfo != null) {
-            fieldAndValueForPartialSearch = searchInfo.getFieldAndValueForPartialSearch();
-            fieldForSorting = searchInfo.getFieldForSorting();
-            isAscending = searchInfo.getIsAscending();
-        }
-
-        List<GiftCertificate> giftCertificates;
-
-        if ((fieldAndValueForPartialSearch != null && !fieldAndValueForPartialSearch.isEmpty())
-                || (tagNames != null && StringUtils.isNoneBlank(tagNames))
-                || (StringUtils.isNotBlank(fieldForSorting) && isAscending != null)) {
-            giftCertificates = giftCertificateService.getGiftCertificates(searchInfo, tagNames, limit, offset);
-        } else {
-            giftCertificates = giftCertificateService.getAll(limit, offset);
-        }
-
-        return giftCertificates;
     }
 
     private void addGenericGiftCertificateLinks(GiftCertificate giftCertificate) {

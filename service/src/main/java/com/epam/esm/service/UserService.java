@@ -1,11 +1,12 @@
 package com.epam.esm.service;
 
 import com.epam.esm.constant.GenericExceptionMessageConstants;
-import com.epam.esm.dao.UserDao;
+import com.epam.esm.hibernate.UserDao;
 import com.epam.esm.entity.User;
 import com.epam.esm.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,10 +24,7 @@ public class UserService implements com.epam.esm.service.Service<User> {
     }
 
     public List<User> getAll(int limit, int offset) {
-        if (limit < 0 || offset < 0) {
-            throw new IllegalArgumentException(GenericExceptionMessageConstants.NEGATIVE_VALUE_PROHIBITED);
-        }
-
+        checkPaginationParameters(limit, offset);
         return userDao.getAll(limit, offset);
     }
 
@@ -39,6 +37,7 @@ public class UserService implements com.epam.esm.service.Service<User> {
         return userDao.create(user);
     }
 
+    @Transactional
     public void delete(long id) {
         Optional<User> optionalUser = userDao.getById(id);
         optionalUser.orElseThrow(() -> new ResourceNotFoundException(GenericExceptionMessageConstants.RESOURCE_NOT_FOUND, USER));

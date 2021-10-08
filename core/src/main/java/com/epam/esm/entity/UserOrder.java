@@ -2,21 +2,36 @@ package com.epam.esm.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.apache.catalina.User;
 import org.springframework.hateoas.RepresentationModel;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+@Entity
+@Table(name = "user_order")
 public class UserOrder extends RepresentationModel<UserOrder> {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonIgnore
     private Long id;
-    @JsonIgnore
+
+    @Column(name = "user_id")
     private Long userId;
-    @JsonIgnore
+
+    @Column(name = "gift_certificate_id")
     private Long giftCertificateId;
+
+    @Column(columnDefinition = "BIGINT")
     private Integer cost;
+
+    @Column(name = "purchase_timestamp", columnDefinition = "VARCHAR(30)")
     private LocalDateTime purchaseTimestamp;
 
     private static final String DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS";

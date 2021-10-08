@@ -1,7 +1,7 @@
 package com.epam.esm.service;
 
 import com.epam.esm.constant.GenericExceptionMessageConstants;
-import com.epam.esm.dao.UserOrderDao;
+import com.epam.esm.hibernate.UserOrderDao;
 import com.epam.esm.entity.GiftCertificate;
 import com.epam.esm.entity.UserOrder;
 import com.epam.esm.exception.ResourceNotFoundException;
@@ -9,6 +9,7 @@ import com.epam.esm.util.DateTimeUtils;
 import com.epam.esm.validator.UserOrderValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -37,18 +38,12 @@ public class UserOrderService implements com.epam.esm.service.Service<UserOrder>
     }
 
     public List<UserOrder> getAll(int limit, int offset) {
-        if (limit < 0 || offset < 0) {
-            throw new IllegalArgumentException(GenericExceptionMessageConstants.NEGATIVE_VALUE_PROHIBITED);
-        }
-
+        checkPaginationParameters(limit, offset);
         return userOrderDao.getAll(limit, offset);
     }
 
     public List<UserOrder> getAllByUserId(long userId, int limit, int offset) {
-        if (limit < 0 || offset < 0) {
-            throw new IllegalArgumentException(GenericExceptionMessageConstants.NEGATIVE_VALUE_PROHIBITED);
-        }
-
+        checkPaginationParameters(limit, offset);
         return userOrderDao.getAllByUserId(userId, limit, offset);
     }
 
@@ -71,6 +66,7 @@ public class UserOrderService implements com.epam.esm.service.Service<UserOrder>
         return userOrderDao.create(userOrder);
     }
 
+    @Transactional
     public void delete(long id) {
         Optional<UserOrder> optionalUserOrder = userOrderDao.getById(id);
         optionalUserOrder.orElseThrow(() -> new ResourceNotFoundException(GenericExceptionMessageConstants.RESOURCE_NOT_FOUND, USER_ORDER));

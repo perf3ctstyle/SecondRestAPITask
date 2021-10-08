@@ -6,20 +6,42 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.Validate;
 import org.springframework.hateoas.RepresentationModel;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
+@Entity
+@Table(name = "gift_certificate")
 public class GiftCertificate extends RepresentationModel<GiftCertificate> {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonIgnore
     private Long id;
     private String name;
     private String description;
+
+    @Column(columnDefinition = "BIGINT")
     private Integer price;
     private Long duration;
+
+    @Column(name = "create_date", columnDefinition = "VARCHAR(30)")
     private LocalDateTime createDate;
+
+    @Column(name = "last_update_date", columnDefinition = "VARCHAR(30)")
     private LocalDateTime lastUpdateDate;
+
+    @ManyToMany
+    @JoinTable(name = "gift_and_tag", joinColumns = @JoinColumn(name = "certificate_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
     private List<Tag> tags;
 
     private static final String DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS";

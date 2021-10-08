@@ -1,5 +1,7 @@
 package com.epam.esm.util;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.Map;
 
 public class SqlUtils {
@@ -10,6 +12,8 @@ public class SqlUtils {
     private static final String LIKE = " LIKE ";
     private static final String ASCENDING = " ASC";
     private static final String DESCENDING = " DESC";
+    private static final String LIMIT = " LIMIT ";
+    private static final String OFFSET = " OFFSET ";
     private static final String WILDCARD_ANY = "%";
     private static final String SINGLE_QUOTE = "'";
     private static final String COMMA = ",";
@@ -17,22 +21,6 @@ public class SqlUtils {
     private static final String ID = " ID = ";
 
     private SqlUtils() {
-    }
-
-    public static String constructQueryForGettingWithPartialSearchAndSorting(String query, Map<String, String> fieldAndValueForPartialSearch, String fieldForSorting, Boolean isAscending) {
-        StringBuilder stringBuilder = new StringBuilder(query);
-
-        if (fieldAndValueForPartialSearch != null && !fieldAndValueForPartialSearch.isEmpty()) {
-            String partialSearchQuery = applyPartialSearch(fieldAndValueForPartialSearch);
-            stringBuilder.append(partialSearchQuery);
-        }
-
-        if (fieldForSorting != null && isAscending != null) {
-            String sortingQuery = applySorting(fieldForSorting, isAscending);
-            stringBuilder.append(sortingQuery);
-        }
-
-        return stringBuilder.toString();
     }
 
     public static String constructQueryForUpdating(String query, long id, Map<String, String> fieldNameValueForUpdate) {
@@ -64,43 +52,64 @@ public class SqlUtils {
         return stringBuilder.toString();
     }
 
-    private static String applyPartialSearch(Map<String, String> fieldAndValueForPartialSearch) {
-        StringBuilder stringBuilder = new StringBuilder(WHERE);
+    public static String applyPartialSearch(Map<String, String> fieldAndValueForPartialSearch) {
+        StringBuilder stringBuilder = new StringBuilder();
 
-        for (Map.Entry<String, String> entry : fieldAndValueForPartialSearch.entrySet()) {
-            String fieldName = entry.getKey();
-            String partOfField = entry.getValue();
+        if (fieldAndValueForPartialSearch != null && !fieldAndValueForPartialSearch.isEmpty()) {
+            for (Map.Entry<String, String> entry : fieldAndValueForPartialSearch.entrySet()) {
+                String fieldName = entry.getKey();
+                String partOfField = entry.getValue();
 
-            if (partOfField != null) {
-                stringBuilder
-                        .append(fieldName)
-                        .append(LIKE)
-                        .append(SINGLE_QUOTE)
-                        .append(WILDCARD_ANY)
-                        .append(partOfField)
-                        .append(WILDCARD_ANY)
-                        .append(SINGLE_QUOTE)
-                        .append(AND);
+                if (partOfField != null) {
+                    stringBuilder
+                            .append(fieldName)
+                            .append(LIKE)
+                            .append(SINGLE_QUOTE)
+                            .append(WILDCARD_ANY)
+                            .append(partOfField)
+                            .append(WILDCARD_ANY)
+                            .append(SINGLE_QUOTE)
+                            .append(AND);
+                }
             }
-        }
 
-        int lengthWithoutLastAnd = stringBuilder.length() - AND.length();
-        stringBuilder.setLength(lengthWithoutLastAnd);
+            int lengthWithoutLastAnd = stringBuilder.length() - AND.length();
+            stringBuilder.setLength(lengthWithoutLastAnd);
+        }
 
         return stringBuilder.toString();
     }
 
-    private static String applySorting(String fieldForSorting, Boolean isAscending) {
+    public static String applySorting(String fieldForSorting, Boolean ascending) {
         StringBuilder stringBuilder = new StringBuilder();
 
-        stringBuilder
-                .append(ORDER_BY)
-                .append(fieldForSorting);
+        if (StringUtils.isNotBlank(fieldForSorting) && ascending != null) {
+            stringBuilder
+                    .append(ORDER_BY)
+                    .append(fieldForSorting);
 
-        if (isAscending) {
-            stringBuilder.append(ASCENDING);
-        } else {
-            stringBuilder.append(DESCENDING);
+            if (ascending) {
+                stringBuilder.append(ASCENDING);
+            } else {
+                stringBuilder.append(DESCENDING);
+            }
+        }
+
+        return stringBuilder.toString();
+    }
+
+    public static String applyPagination(Integer limit, Integer offset) {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        if (limit != null) {
+            stringBuilder
+                    .append(LIMIT)
+                    .append(limit);
+        }
+        if (offset != null) {
+            stringBuilder
+                    .append(OFFSET)
+                    .append(offset);
         }
 
         return stringBuilder.toString();
