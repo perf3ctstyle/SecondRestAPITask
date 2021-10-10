@@ -1,139 +1,187 @@
 package com.epam.esm.service;
 
+import com.epam.esm.dto.TagCostDto;
+import com.epam.esm.entity.Tag;
+import com.epam.esm.exception.ResourceAlreadyExistsException;
+import com.epam.esm.exception.ResourceNotFoundException;
+import com.epam.esm.hibernate.TagDao;
+import com.epam.esm.validator.TagValidator;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.doNothing;
-
 public class TagServiceTest {
 
-    // To be implemented
-
-    /*private final TagDao tagDao = Mockito.mock(TagDao.class);
+    private final TagDao tagDao = Mockito.mock(TagDao.class);
     private final TagValidator tagValidator = Mockito.mock(TagValidator.class);
     private final TagService tagService = new TagService(tagDao, tagValidator);
 
+    private final List<Tag> tags = new ArrayList<>();
+    private final Tag tag = new Tag();
+    private final long tagId = 1L;
+    private final long userId = 2L;
+    private final String name = "tag";
+    private final Optional<Tag> optionalTag = Optional.of(tag);
+
     @Test
-    public void testShouldReturnListOfTagsInGetAll() {
-        List<Tag> expected = Arrays.asList(new Tag(), new Tag());
-        //Mockito.when(tagDao.getAll()).thenReturn(expected);
+    public void testShouldGetAllTagsWhenPaginationParametersAreAccurate() {
+        int limit = 3;
+        int offset = 2;
+        Mockito.when(tagDao.getAll(limit, offset)).thenReturn(tags);
 
-        //List<Tag> actual = tagService.getAll();
+        List<Tag> actual = tagService.getAll(limit, offset);
 
-        //assertEquals(expected, actual);
+        Assertions.assertEquals(tags, actual);
     }
 
     @Test
-    public void testShouldReturnTagInGetById() {
-        long id = 0;
-        Tag expected = new Tag();
-        Mockito.when(tagDao.getById(id)).thenReturn(Optional.of(expected));
+    public void testShouldThrowExceptionWhenPaginationParametersAreNegativeOnGetAllTags() {
+        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            int limit = -1;
+            int offset = -5;
 
-        Tag actual = tagService.getById(id);
-
-        assertEquals(expected, actual);
-    }
-
-    @Test
-    public void testShouldThrowExceptionWhenResourceIsNotFoundById() {
-        assertThrows(ResourceNotFoundException.class, () -> {
-            long id = 0;
-            Mockito.when(tagDao.getById(id)).thenReturn(Optional.empty());
-
-            tagService.getById(id);
+            tagService.getAll(limit, offset);
         });
     }
 
     @Test
-    public void testShouldReturnTagInGetByName() {
-        Tag expected = new Tag();
-        Mockito.when(tagDao.getByName(null)).thenReturn(Optional.of(expected));
+    public void testShouldGetTagById() {
+        Mockito.when(tagDao.getById(tagId)).thenReturn(optionalTag);
 
-        Tag actual = tagService.getByName(null);
+        Tag actual = tagService.getById(tagId);
 
-        assertEquals(expected, actual);
+        Assertions.assertEquals(tag, actual);
     }
 
     @Test
-    public void testShouldThrowExceptionWhenResourceIsNotFoundByName() {
-        assertThrows(ResourceNotFoundException.class, () -> {
-            Mockito.when(tagDao.getByName(null)).thenReturn(Optional.empty());
+    public void testShouldThrowExceptionWhenTagWasNotFoundById() {
+        Assertions.assertThrows(ResourceNotFoundException.class, () -> {
+            Mockito.when(tagDao.getById(tagId)).thenReturn(Optional.empty());
 
-            tagService.getByName(null);
+            tagService.getById(tagId);
         });
     }
 
     @Test
-    public void testShouldWorkCorrectlyInCreate() {
-        String name = "name";
-        Tag tag = new Tag(0L, name);
+    public void testShouldGetTagByName() {
+        Mockito.when(tagDao.getByName(name)).thenReturn(optionalTag);
+
+        Tag actual = tagService.getByName(name);
+
+        Assertions.assertEquals(tag, actual);
+    }
+
+    @Test
+    public void testShouldThrowExceptionWhenTagWasNotFoundByName() {
+        Assertions.assertThrows(ResourceNotFoundException.class, () -> {
+            Mockito.when(tagDao.getByName(name)).thenReturn(Optional.empty());
+
+            tagService.getByName(name);
+        });
+    }
+
+    @Test
+    public void testShouldGetMostWidelyUsedTagOfUserWithHighestCostOfOrders() {
+        TagCostDto tagCost = new TagCostDto();
+        Optional<TagCostDto> optionalTagCost = Optional.of(tagCost);
+        Mockito.when(tagDao.getMostWidelyUsedTagOfUserWithHighestCostOfOrders(userId)).thenReturn(optionalTagCost);
+
+        TagCostDto actual = tagService.getMostWidelyUsedTagOfUserWithHighestCostOfOrders(userId);
+
+        Assertions.assertEquals(tagCost, actual);
+    }
+
+    @Test
+    public void testShouldThrowExceptionWhenMostWidelyUsedTagWasNotFound() {
+        Assertions.assertThrows(ResourceNotFoundException.class, () -> {
+            Mockito.when(tagDao.getMostWidelyUsedTagOfUserWithHighestCostOfOrders(userId)).thenReturn(Optional.empty());
+
+            tagService.getMostWidelyUsedTagOfUserWithHighestCostOfOrders(userId);
+        });
+    }
+
+    @Test
+    public void testShouldReturnTagIdWhenCreateTag() {
+        tag.setName(name);
+        Mockito.doNothing().when(tagValidator).validateForCreation(tag);
         Mockito.when(tagDao.getByName(name)).thenReturn(Optional.empty());
-        Mockito.when(tagDao.create(tag)).thenReturn(0L);
+        Mockito.when(tagDao.create(tag)).thenReturn(tagId);
 
-        tagService.create(tag);
+        long actualTagId = tagService.create(tag);
+
+        Assertions.assertEquals(tagId, actualTagId);
     }
 
     @Test
-    public void testShouldThrowExceptionWhenTagWithSameNameExistsInCreate() {
-        assertThrows(ResourceAlreadyExistsException.class, () -> {
-            String name = "name";
-            Tag tag = new Tag(0L, name);
-            Mockito.when(tagDao.getByName(name)).thenReturn(Optional.of(new Tag()));
+    public void testShouldThrowExceptionWhenTagWithSameNameExistsInCreateTag() {
+        Assertions.assertThrows(ResourceAlreadyExistsException.class, () -> {
+            tag.setName(name);
+            Mockito.when(tagDao.getByName(name)).thenReturn(Optional.of(tag));
 
             tagService.create(tag);
         });
     }
 
     @Test
-    public void testShouldWorkCorrectlyInCreateTagsIfNotPresent() {
-        String name = "name";
-        Tag tag = new Tag(null, name);
-        List<Tag> tags = List.of(tag);
+    public void testShouldReturnTagIdsWhenCreateTagsIfNotCreated() {
+        tag.setName(name);
+        List<Tag> tags = Collections.singletonList(tag);
+        Mockito.doNothing().when(tagValidator).validateForCreation(tag);
         Mockito.when(tagDao.getByName(name)).thenReturn(Optional.empty());
-        Long tagId = 0L;
-        List<Long> expectedAutoGeneratedIds = List.of(tagId);
+        List<Long> expectedAutoGeneratedIds = Collections.singletonList(tagId);
         Mockito.when(tagDao.create(tag)).thenReturn(tagId);
 
         List<Long> actualAutoGeneratedIds = tagService.createTagsIfNotCreated(tags);
 
-        assertEquals(expectedAutoGeneratedIds, actualAutoGeneratedIds);
+        Assertions.assertEquals(expectedAutoGeneratedIds, actualAutoGeneratedIds);
     }
 
     @Test
-    public void testShouldWorkCorrectlyInGetTagsByListOfIds() {
-        Long tagId = 0L;
-        List<Long> tagIds = List.of(tagId);
-        Tag tag = new Tag(tagId, "name");
+    public void testShouldReturnTagIdsWhenCreatedTagsIfCreated() {
+        tag.setId(tagId);
+        tag.setName(name);
+        List<Tag> tags = Collections.singletonList(tag);
+        Mockito.doNothing().when(tagValidator).validateForCreation(tag);
+        Mockito.when(tagDao.getByName(name)).thenReturn(optionalTag);
+        List<Long> expectedAutoGeneratedIds = Collections.singletonList(tagId);
+
+        List<Long> actualAutoGeneratedIds = tagService.createTagsIfNotCreated(tags);
+
+        Assertions.assertEquals(expectedAutoGeneratedIds, actualAutoGeneratedIds);
+    }
+
+    @Test
+    public void testShouldGetTagsByListOfIds() {
+        List<Long> tagIds = Collections.singletonList(tagId);
+        tag.setId(tagId);
+        tag.setName(name);
         Mockito.when(tagDao.getById(tagId)).thenReturn(Optional.of(tag));
-        List<Tag> expected = List.of(tag);
+        List<Tag> expected = Collections.singletonList(tag);
 
         List<Tag> actual = tagService.getTagsByListOfIds(tagIds);
 
-        assertEquals(expected, actual);
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
-    public void testShouldWorkCorrectlyInDeleteById() {
-        long id = 0;
-        Mockito.when(tagDao.getById(id)).thenReturn(Optional.of(new Tag()));
-        doNothing().when(tagDao).delete(id);
+    public void testShouldDoNothingWhenDeleteTag() {
+        Mockito.when(tagDao.getById(tagId)).thenReturn(optionalTag);
+        Mockito.doNothing().when(tagDao).delete(tagId);
 
-        tagService.delete(id);
+        tagService.delete(tagId);
     }
 
     @Test
-    public void testShouldThrowExceptionWhenResourceIsNotFoundBeforeDeleting() {
-        assertThrows(ResourceNotFoundException.class, () -> {
-            long id = 0;
-            Mockito.when(tagDao.getById(id)).thenReturn(Optional.empty());
+    public void testShouldThrowExceptionWhenDeleteNonExistentTag() {
+        Assertions.assertThrows(ResourceNotFoundException.class, () -> {
+            Mockito.when(tagDao.getById(tagId)).thenReturn(Optional.empty());
 
-            tagService.delete(id);
+            tagService.delete(tagId);
         });
-    }*/
+    }
 }
