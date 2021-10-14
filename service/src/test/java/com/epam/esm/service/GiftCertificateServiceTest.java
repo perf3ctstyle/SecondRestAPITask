@@ -1,6 +1,5 @@
 package com.epam.esm.service;
 
-import com.epam.esm.constructor.GiftCertificateObjectConstructor;
 import com.epam.esm.dto.SearchInfoDto;
 import com.epam.esm.entity.GiftCertificate;
 import com.epam.esm.entity.Tag;
@@ -25,13 +24,11 @@ public class GiftCertificateServiceTest {
     private final TagService tagService = Mockito.mock(TagService.class);
     private final GiftAndTagDao giftAndTagDao = Mockito.mock(GiftAndTagDao.class);
     private final GiftCertificateValidator giftCertificateValidator = Mockito.mock(GiftCertificateValidator.class);
-    private final GiftCertificateObjectConstructor giftCertificateObjectConstructor = Mockito.mock(GiftCertificateObjectConstructor.class);
     private final GiftCertificateService giftCertificateService = new GiftCertificateService(
             giftCertificateDao,
             tagService,
             giftAndTagDao,
-            giftCertificateValidator,
-            giftCertificateObjectConstructor
+            giftCertificateValidator
     );
 
     private final List<GiftCertificate> giftCertificates = new ArrayList<>();

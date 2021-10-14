@@ -1,18 +1,24 @@
 package com.epam.esm.entity;
 
+import com.epam.esm.audit.AuditListener;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.hateoas.RepresentationModel;
 
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.PrePersist;
+import javax.persistence.PreRemove;
+import javax.persistence.PreUpdate;
 import javax.persistence.Table;
 import java.util.Objects;
 
 @Entity
 @Table(name = "tag")
-public class Tag extends RepresentationModel<Tag> {
+@EntityListeners(AuditListener.class)
+public class Tag extends RepresentationModel<Tag> implements Identifiable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,6 +42,7 @@ public class Tag extends RepresentationModel<Tag> {
         this.id = id;
     }
 
+    @Override
     public Long getId() {
         return id;
     }
@@ -63,5 +70,20 @@ public class Tag extends RepresentationModel<Tag> {
     @Override
     public int hashCode() {
         return Objects.hash(id, name);
+    }
+
+    @PrePersist
+    public void onPrePersist() {
+        System.out.println("Persist!");
+    }
+
+    @PreUpdate
+    public void onPreUpdate() {
+        System.out.println("Update!");
+    }
+
+    @PreRemove
+    public void onPreRemove() {
+        System.out.println("Remove!");
     }
 }

@@ -1,20 +1,22 @@
 package com.epam.esm.service;
 
 import com.epam.esm.constant.GenericExceptionMessageConstants;
-import com.epam.esm.dto.TagCostDto;
 import com.epam.esm.entity.Tag;
 import com.epam.esm.exception.DaoException;
 import com.epam.esm.exception.RequiredFieldMissingException;
 import com.epam.esm.exception.ResourceAlreadyExistsException;
 import com.epam.esm.exception.ResourceNotFoundException;
 import com.epam.esm.hibernate.TagDao;
+import com.epam.esm.hibernate.UserOrderDao;
 import com.epam.esm.validator.TagValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -26,14 +28,16 @@ import java.util.Optional;
 public class TagService implements com.epam.esm.service.Service<Tag> {
 
     private final TagDao tagDao;
+    private final UserOrderDao userOrderDao;
     private final TagValidator tagValidator;
 
     private static final String TAG = "Tag";
     private static final String TAG_WITH_NAME_ALREADY_EXISTS = "Unfortunately, a tag with this name already exists.";
 
     @Autowired
-    public TagService(TagDao tagDao, TagValidator tagValidator) {
+    public TagService(TagDao tagDao, UserOrderDao userOrderDao, TagValidator tagValidator) {
         this.tagDao = tagDao;
+        this.userOrderDao = userOrderDao;
         this.tagValidator = tagValidator;
     }
 
@@ -74,15 +78,20 @@ public class TagService implements com.epam.esm.service.Service<Tag> {
     }
 
     /**
-     * Returns the most widely used tag of {@link com.epam.esm.entity.User} with the highest cost of {@link com.epam.esm.entity.UserOrder}
-     * or throws {@link ResourceNotFoundException} if nothing is retrieved from a database.
+     * Returns the most widely used tags of {@link com.epam.esm.entity.User} with the highest cost of {@link com.epam.esm.entity.UserOrder}.
      *
-     * @param userId - the {@link com.epam.esm.entity.User} id whose orders are to be used for searching.
-     * @return {@link TagCostDto} object.
+     * @return {@link List} of {@link Tag} objects.
      */
-    public TagCostDto getMostWidelyUsedTagOfUserWithHighestCostOfOrders(long userId) {
-        Optional<TagCostDto> optionalTagWithCost = tagDao.getMostWidelyUsedTagOfUserWithHighestCostOfOrders(userId);
-        return optionalTagWithCost.orElseThrow(() -> new ResourceNotFoundException(GenericExceptionMessageConstants.RESOURCE_NOT_FOUND, TAG));
+    public Map<Long, List<Tag>> getMostWidelyUsedTagsOfUsersWithHighestCostOfOrders() {
+        List<Long> idsOfUsersWithHighestCostOfOrders = userOrderDao.getIdsOfUsersWithHighestCostOfOrders();
+        Map<Long, List<Tag>> mostWidelyUsedTagsOfUsersWithHighestCostOfOrders = new HashMap<>();
+
+        for (Long userId : idsOfUsersWithHighestCostOfOrders) {
+            List<Tag> mostWidelyUsedTags = tagDao.getMostWidelyUsedTagsOfUserWithHighestCostOfOrders(userId);
+            mostWidelyUsedTagsOfUsersWithHighestCostOfOrders.put(userId, mostWidelyUsedTags);
+        }
+
+        return mostWidelyUsedTagsOfUsersWithHighestCostOfOrders;
     }
 
     /**
@@ -112,6 +121,10 @@ public class TagService implements com.epam.esm.service.Service<Tag> {
      */
     public List<Long> createTagsIfNotCreated(List<Tag> tags) {
         List<Long> ids = new ArrayList<>();
+
+        if (tags == null) {
+            return ids;
+        }
 
         for (Tag tag : tags) {
             tagValidator.validateForCreation(tag);
@@ -145,6 +158,10 @@ public class TagService implements com.epam.esm.service.Service<Tag> {
     public List<Tag> getTagsByListOfIds(List<Long> tagIds) {
         List<Tag> tags = new ArrayList<>();
 
+        if (tagIds == null) {
+            return tags;
+        }
+
         tagIds.forEach(tagId -> {
             Optional<Tag> optionalTag = tagDao.getById(tagId);
             optionalTag.ifPresent(tags::add);
@@ -162,8 +179,8 @@ public class TagService implements com.epam.esm.service.Service<Tag> {
     @Transactional
     public void delete(long id) {
         Optional<Tag> optionalTag = tagDao.getById(id);
-        optionalTag.orElseThrow(() -> new ResourceNotFoundException(GenericExceptionMessageConstants.RESOURCE_NOT_FOUND, TAG));
+        Tag tag = optionalTag.orElseThrow(() -> new ResourceNotFoundException(GenericExceptionMessageConstants.RESOURCE_NOT_FOUND, TAG));
 
-        tagDao.delete(id);
+        tagDao.delete(tag);
     }
 }

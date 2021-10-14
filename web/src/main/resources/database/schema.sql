@@ -39,3 +39,39 @@ create table user_order
     FOREIGN KEY (user_id) REFERENCES user (id),
     FOREIGN KEY (gift_certificate_id) REFERENCES gift_certificate (id)
 );
+
+create table gift_certificate_audit
+(
+    id                  BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    entity_id           BIGINT NOT NULL,
+    operation_type      VARCHAR(10),
+    operation_timestamp VARCHAR(30),
+    FOREIGN KEY (entity_id) REFERENCES gift_certificate (id) ON DELETE CASCADE
+);
+
+create table tag_audit
+(
+    id                  BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    entity_id           BIGINT NOT NULL,
+    operation_type      VARCHAR(10),
+    operation_timestamp VARCHAR(30),
+    FOREIGN KEY (entity_id) REFERENCES tag (id) ON DELETE CASCADE
+);
+
+create table user_audit
+(
+    id                  BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    entity_id           BIGINT NOT NULL,
+    operation_type      VARCHAR(10),
+    operation_timestamp VARCHAR(30),
+    FOREIGN KEY (entity_id) REFERENCES user (id) ON DELETE CASCADE
+);
+
+create table user_order_audit
+(
+    id                  BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    entity_id           BIGINT NOT NULL,
+    operation_type      VARCHAR(10),
+    operation_timestamp VARCHAR(30),
+    FOREIGN KEY (entity_id) REFERENCES user_order (id) ON DELETE CASCADE
+);

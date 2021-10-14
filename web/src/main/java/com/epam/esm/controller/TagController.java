@@ -1,7 +1,6 @@
 package com.epam.esm.controller;
 
 import com.epam.esm.constant.MessageSourceConstants;
-import com.epam.esm.dto.TagCostDto;
 import com.epam.esm.entity.ErrorInfo;
 import com.epam.esm.entity.Tag;
 import com.epam.esm.exception.DaoException;
@@ -28,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
@@ -46,6 +46,8 @@ public class TagController {
 
     private static final String ID = "id";
     private static final String USER_ID = "userId";
+    private static final String LIMIT = "limit";
+    private static final String OFFSET = "offset";
     private static final String ID_PATH = "/{id}";
 
     private static final String JSON = "application/json";
@@ -68,10 +70,9 @@ public class TagController {
      * @param offset - a number of {@link Tag} objects to skip when returning
      * @return {@link ResponseEntity} with a {@link HttpStatus} and a {@link List} of {@link Tag} objects.
      */
-    @GetMapping(produces = JSON)
+    @GetMapping(params = {LIMIT, OFFSET}, produces = JSON)
     public ResponseEntity<?> getAll(int limit, int offset) {
         List<Tag> tags = tagService.getAll(limit, offset);
-
         for (Tag tag : tags) {
             addGenericTagLinks(tag);
         }
@@ -98,27 +99,17 @@ public class TagController {
     }
 
     /**
-     * Returns the most widely used tag of {@link com.epam.esm.entity.User} with the highest cost of {@link com.epam.esm.entity.UserOrder}
-     * or throws {@link ResourceNotFoundException} if nothing is retrieved from a database.
+     * Returns the most widely used tags of {@link com.epam.esm.entity.User} with the highest cost of {@link com.epam.esm.entity.UserOrder}.
      *
-     * @param userId - the {@link com.epam.esm.entity.User} id whose orders are to be used for searching.
-     * @return {@link ResponseEntity} with a {@link HttpStatus} and a {@link Tag} object or a {@link ErrorInfo} object.
+     * @return {@link ResponseEntity} with a {@link HttpStatus} and a {@link Map} of {@link com.epam.esm.entity.User} ids and
+     * {@link List} of associated most widely used {@link Tag} objects or a {@link ErrorInfo} object.
      */
-    @GetMapping(params = {USER_ID}, produces = JSON)
-    public ResponseEntity<?> getMostWidelyUsedTagOfUserWithHighestCostOfOrders(@RequestParam long userId) {
-        TagCostDto tagCostWithHighestCostOfUserOrders = tagService.getMostWidelyUsedTagOfUserWithHighestCostOfOrders(userId);
+    @GetMapping(produces = JSON)
+    public ResponseEntity<?> getMostWidelyUsedTagsOfUsersWithHighestCostOfOrders() {
+        Map<Long, List<Tag>> mostWidelyUsedTagsOfUsersWithHighestCostOfOrders
+                = tagService.getMostWidelyUsedTagsOfUsersWithHighestCostOfOrders();
 
-        long tagId = tagCostWithHighestCostOfUserOrders.getId();
-        String tagName = tagCostWithHighestCostOfUserOrders.getName();
-        Tag tagWithHighestCostOfUserOrders = new Tag(tagId, tagName);
-
-        addGenericTagLinks(tagWithHighestCostOfUserOrders);
-        Link selfLink = linkTo(methodOn(TagController.class)
-                .getMostWidelyUsedTagOfUserWithHighestCostOfOrders(userId))
-                .withSelfRel();
-        tagWithHighestCostOfUserOrders.add(selfLink);
-
-        return new ResponseEntity<>(tagWithHighestCostOfUserOrders, HttpStatus.OK);
+        return new ResponseEntity<>(mostWidelyUsedTagsOfUsersWithHighestCostOfOrders, HttpStatus.OK);
     }
 
     /**

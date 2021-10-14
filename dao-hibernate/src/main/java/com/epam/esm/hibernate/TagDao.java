@@ -1,7 +1,6 @@
 package com.epam.esm.hibernate;
 
 import com.epam.esm.constant.TagConstants;
-import com.epam.esm.dto.TagCostDto;
 import com.epam.esm.entity.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -23,16 +22,14 @@ public class TagDao implements Dao<Tag> {
     private final EntityManager entityManager;
 
     private static final String GET_ALL = "SELECT ID, NAME FROM TAG LIMIT :LIMIT OFFSET :OFFSET";
-    private static final String GET_BY_ID = "SELECT ID, NAME FROM TAG WHERE ID = :ID";
     private static final String GET_BY_NAME = "SELECT ID, NAME FROM TAG WHERE NAME = :NAME";
-    private static final String GET_TAGS_WITH_COST_SUM_OF_ORDERS =
-            " SELECT t.*, SUM(cost) costSum FROM tag t "
-                    + " INNER JOIN gift_and_tag gt on t.id = gt.tag_id "
-                    + " INNER JOIN user_order uo on gt.certificate_id = uo.gift_certificate_id "
-                    + " WHERE uo.user_id = :USER_ID "
-                    + " GROUP BY t.id ORDER BY costSum DESC LIMIT 1";
-    private static final String CREATE = "INSERT INTO TAG(NAME) VALUES(:NAME)";
-    private static final String DELETE = "DELETE FROM TAG WHERE ID = :ID";
+    private static final String GET_TAGS_WITH_HIGHEST_COST_OF_ORDERS = "WITH TAG_WITH_COST (id, name, cost_sum) AS "
+            + "(SELECT t.id, t.name, SUM(cost) cost_sum FROM tag t "
+            + " INNER JOIN gift_and_tag gt on t.id = gt.tag_id "
+            + " INNER JOIN user_order uo on gt.certificate_id = uo.gift_certificate_id "
+            + " WHERE uo.user_id = :USER_ID "
+            + " GROUP BY t.id)"
+            + " SELECT id, name FROM TAG_WITH_COST WHERE cost_sum = (SELECT MAX(cost_sum) FROM TAG_WITH_COST)";
 
     private static final String LIMIT = "LIMIT";
     private static final String OFFSET = "OFFSET";
@@ -66,12 +63,8 @@ public class TagDao implements Dao<Tag> {
      * @return {@link Optional} with a {@link Tag} object if it was found in a database.
      */
     public Optional<Tag> getById(long id) {
-        Tag result = (Tag) entityManager
-                .createNativeQuery(GET_BY_ID, Tag.class)
-                .setParameter(TagConstants.ID, id)
-                .getSingleResult();
-
-        return Optional.of(result);
+        Tag result = entityManager.find(Tag.class, id);
+        return Optional.ofNullable(result);
     }
 
     /**
@@ -91,18 +84,15 @@ public class TagDao implements Dao<Tag> {
     }
 
     /**
-     * Returns the most widely used tag of {@link com.epam.esm.entity.User} with the highest cost of {@link com.epam.esm.entity.UserOrder}.
+     * Returns the most widely used tags of {@link com.epam.esm.entity.User} with the highest cost of {@link com.epam.esm.entity.UserOrder}.
      *
-     * @param userId - the {@link com.epam.esm.entity.User} id whose orders are to be used for searching.
-     * @return {@link Optional} with a {@link TagCostDto} object if it was found in a database.
+     * @return {@link List} of {@link Tag} objects.
      */
-    public Optional<TagCostDto> getMostWidelyUsedTagOfUserWithHighestCostOfOrders(long userId) {
-        TagCostDto result = (TagCostDto) entityManager
-                .createNativeQuery(GET_TAGS_WITH_COST_SUM_OF_ORDERS, TagCostDto.class)
+    public List<Tag> getMostWidelyUsedTagsOfUserWithHighestCostOfOrders(long userId) {
+        return entityManager
+                .createNativeQuery(GET_TAGS_WITH_HIGHEST_COST_OF_ORDERS, Tag.class)
                 .setParameter(USER_ID, userId)
-                .getSingleResult();
-
-        return Optional.of(result);
+                .getResultList();
     }
 
     /**
@@ -115,24 +105,22 @@ public class TagDao implements Dao<Tag> {
         EntityTransaction transaction = entityManager.getTransaction();
 
         transaction.begin();
-        entityManager
-                .createNativeQuery(CREATE)
-                .setParameter(TagConstants.NAME, tag.getName());
-        Tag createdTag = entityManager.merge(tag);
+        entityManager.persist(tag);
         transaction.commit();
 
-        return createdTag.getId();
+        return tag.getId();
     }
 
     /**
      * Deletes a {@link Tag} object in a database by its id.
      *
-     * @param id - the {@link Tag} object's id that is to be deleted in a database.
+     * @param tag - the {@link Tag} object that is to be deleted in a database.
      */
-    public void delete(long id) {
-        entityManager
-                .createNativeQuery(DELETE)
-                .setParameter(TagConstants.ID, id)
-                .executeUpdate();
+    public void delete(Tag tag) {
+        EntityTransaction transaction = entityManager.getTransaction();
+
+        transaction.begin();
+        entityManager.remove(tag);
+        transaction.commit();
     }
 }

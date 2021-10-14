@@ -112,8 +112,12 @@ public class UserOrderService implements com.epam.esm.service.Service<UserOrder>
     @Transactional
     public void delete(long id) {
         Optional<UserOrder> optionalUserOrder = userOrderDao.getById(id);
-        optionalUserOrder.orElseThrow(() -> new ResourceNotFoundException(GenericExceptionMessageConstants.RESOURCE_NOT_FOUND, USER_ORDER));
+        UserOrder userOrder = optionalUserOrder.orElseThrow(() -> new ResourceNotFoundException(GenericExceptionMessageConstants.RESOURCE_NOT_FOUND, USER_ORDER));
 
-        userOrderDao.delete(id);
+        userOrderDao.delete(userOrder);
+    }
+
+    public List<Long> getIdsOfUsersWithHighestCostOfOrders() {
+        return userOrderDao.getIdsOfUsersWithHighestCostOfOrders();
     }
 }

@@ -2,11 +2,13 @@ package com.epam.esm.hibernate;
 
 import com.epam.esm.constant.UserOrderConstants;
 import com.epam.esm.entity.UserOrder;
+import com.epam.esm.util.SqlUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,9 +25,10 @@ public class UserOrderDao implements Dao<UserOrder> {
 
     private static final String GET_ALL = "SELECT ID, USER_ID, GIFT_CERTIFICATE_ID, COST, PURCHASE_TIMESTAMP FROM USER_ORDER LIMIT :LIMIT OFFSET :OFFSET";
     private static final String GET_ALL_BY_USER_ID = "SELECT ID, USER_ID, GIFT_CERTIFICATE_ID, COST, PURCHASE_TIMESTAMP FROM USER_ORDER WHERE USER_ID = :USER_ID LIMIT :LIMIT OFFSET :OFFSET";
-    private static final String GET_BY_ID = "SELECT ID, USER_ID, GIFT_CERTIFICATE_ID, COST, PURCHASE_TIMESTAMP FROM USER_ORDER WHERE ID = :ID";
-    private static final String CREATE = "INSERT INTO USER_ORDER(USER_ID, GIFT_CERTIFICATE_ID, COST, PURCHASE_TIMESTAMP) VALUES(:USER_ID, :GIFT_CERTIFICATE_ID, :COST, :PURCHASE_TIMESTAMP)";
-    private static final String DELETE = "DELETE FROM USER_ORDER WHERE ID = :ID";
+    private static final String GET_ID_OF_USERS_WITH_HIGHEST_COST_OF_ORDERS = "WITH USER_WITH_COST_OF_ORDERS (user_id, cost_sum) AS " +
+            "(SELECT user_id, SUM(COST) as cost_sum FROM user_order GROUP BY user_id) " +
+            "SELECT user_id FROM USER_WITH_COST_OF_ORDERS WHERE cost_sum = " +
+            "(SELECT MAX(cost_sum) FROM USER_WITH_COST_OF_ORDERS)";
 
     private static final String LIMIT = "LIMIT";
     private static final String OFFSET = "OFFSET";
@@ -75,45 +78,44 @@ public class UserOrderDao implements Dao<UserOrder> {
      * @return {@link Optional} with a {@link UserOrder} object if it was found in a database.
      */
     public Optional<UserOrder> getById(long id) {
-        UserOrder result = (UserOrder) entityManager
-                .createNativeQuery(GET_BY_ID, UserOrder.class)
-                .setParameter(UserOrderConstants.ID, id)
-                .getSingleResult();
-
-        return Optional.of(result);
+        UserOrder result = entityManager.find(UserOrder.class, id);
+        return Optional.ofNullable(result);
     }
 
     /**
      * Creates a {@link UserOrder} object in a database.
      *
-     * @param UserOrder - the {@link UserOrder} object that is to be created in a database.
+     * @param userOrder - the {@link UserOrder} object that is to be created in a database.
      * @return {@link UserOrder} object's id which was created in a database.
      */
     public long create(UserOrder userOrder) {
         EntityTransaction transaction = entityManager.getTransaction();
 
         transaction.begin();
-        entityManager
-                .createNativeQuery(CREATE)
-                .setParameter(UserOrderConstants.USER_ID, userOrder.getUserId())
-                .setParameter(UserOrderConstants.GIFT_CERTIFICATE_ID, userOrder.getGiftCertificateId())
-                .setParameter(UserOrderConstants.COST, userOrder.getCost())
-                .setParameter(UserOrderConstants.PURCHASE_TIMESTAMP, userOrder.getPurchaseTimestamp());
-        UserOrder createdUserOrder = entityManager.merge(userOrder);
+        entityManager.persist(userOrder);
         transaction.commit();
 
-        return createdUserOrder.getId();
+        return userOrder.getId();
     }
 
     /**
      * Deletes a {@link UserOrder} object in a database by its id.
      *
-     * @param id - the {@link UserOrder} object's id that is to be deleted in a database.
+     * @param userOrder - the {@link UserOrder} object that is to be deleted in a database.
      */
-    public void delete(long id) {
-        entityManager
-                .createNativeQuery(DELETE)
-                .setParameter(UserOrderConstants.ID, id)
-                .executeUpdate();
+    public void delete(UserOrder userOrder) {
+        EntityTransaction transaction = entityManager.getTransaction();
+
+        transaction.begin();
+        entityManager.remove(userOrder);
+        transaction.commit();
+    }
+
+    public List<Long> getIdsOfUsersWithHighestCostOfOrders() {
+        List<BigInteger> ids = entityManager
+                .createNativeQuery(GET_ID_OF_USERS_WITH_HIGHEST_COST_OF_ORDERS)
+                .getResultList();
+
+        return SqlUtils.toLong(ids);
     }
 }

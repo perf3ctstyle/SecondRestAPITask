@@ -1,7 +1,5 @@
 package com.epam.esm.config;
 
-import com.epam.esm.constructor.GiftCertificateObjectConstructor;
-import com.epam.esm.constructor.GiftCertificateQueryConstructor;
 import com.epam.esm.hibernate.GiftAndTagDao;
 import com.epam.esm.hibernate.GiftCertificateDao;
 import com.epam.esm.hibernate.TagDao;
@@ -33,9 +31,6 @@ import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
-import javax.persistence.PersistenceUnit;
 import javax.sql.DataSource;
 import java.nio.charset.StandardCharsets;
 
@@ -51,14 +46,14 @@ public class ApplicationConfig implements WebMvcConfigurer {
     private static final String LOCALE = "locale";
 
     @Bean
-    public LocalContainerEntityManagerFactoryBean localContainerEntityManagerFactoryBean() {
-        return new LocalContainerEntityManagerFactoryBean();
+    public LocalContainerEntityManagerFactoryBean localContainerEntityManagerFactoryBean(DataSource dataSource) {
+        LocalContainerEntityManagerFactoryBean localContainerEntityManagerFactoryBean = new LocalContainerEntityManagerFactoryBean();
+        localContainerEntityManagerFactoryBean.setDataSource(dataSource);
+        return localContainerEntityManagerFactoryBean;
     }
 
     @Bean
-    public EntityManager entityManager(DataSource dataSource) {
-        LocalContainerEntityManagerFactoryBean localContainerEntityManagerFactoryBean = localContainerEntityManagerFactoryBean();
-        localContainerEntityManagerFactoryBean.setDataSource(dataSource);
+    public EntityManager entityManager(LocalContainerEntityManagerFactoryBean localContainerEntityManagerFactoryBean) {
         return localContainerEntityManagerFactoryBean.createNativeEntityManager(null);
     }
 
@@ -74,7 +69,7 @@ public class ApplicationConfig implements WebMvcConfigurer {
 
     @Bean
     public GiftCertificateDao giftCertificateDao(EntityManager entityManager) {
-        return new GiftCertificateDao(entityManager, giftCertificateQueryConstructor());
+        return new GiftCertificateDao(entityManager);
     }
 
     @Bean
@@ -82,8 +77,7 @@ public class ApplicationConfig implements WebMvcConfigurer {
         return new GiftCertificateService(giftCertificateDao(entityManager),
                 tagService(entityManager),
                 giftAndTagDao(entityManager),
-                giftCertificateValidator(),
-                giftCertificateObjectConstructor());
+                giftCertificateValidator());
     }
 
     @Bean
@@ -98,7 +92,7 @@ public class ApplicationConfig implements WebMvcConfigurer {
 
     @Bean
     public TagService tagService(EntityManager entityManager) {
-        return new TagService(tagDao(entityManager), tagValidator());
+        return new TagService(tagDao(entityManager), userOrderDao(entityManager), tagValidator());
     }
 
     @Bean
@@ -138,16 +132,6 @@ public class ApplicationConfig implements WebMvcConfigurer {
     @Bean
     public GiftAndTagDao giftAndTagDao(EntityManager entityManager) {
         return new GiftAndTagDao(entityManager);
-    }
-
-    @Bean
-    public GiftCertificateQueryConstructor giftCertificateQueryConstructor() {
-        return new GiftCertificateQueryConstructor();
-    }
-
-    @Bean
-    public GiftCertificateObjectConstructor giftCertificateObjectConstructor() {
-        return new GiftCertificateObjectConstructor();
     }
 
     @Bean(MESSAGE_SOURCE)

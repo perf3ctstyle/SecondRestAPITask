@@ -8,6 +8,10 @@
         <class>com.epam.esm.entity.GiftCertificate</class>
         <class>com.epam.esm.entity.User</class>
         <class>com.epam.esm.entity.UserOrder</class>
+<!--        <class>com.epam.esm.audit.AuditableGiftCertificate</class>-->
+<!--        <class>com.epam.esm.audit.AuditableTag</class>-->
+        <class>com.epam.esm.audit.AuditableUser</class>
+<!--        <class>com.epam.esm.audit.AuditableUserOrder</class>-->
         <properties>
             <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect" />
             <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/gift_certificates" />

@@ -2,6 +2,9 @@ package com.epam.esm.util;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class SqlUtils {
@@ -113,5 +116,14 @@ public class SqlUtils {
         }
 
         return stringBuilder.toString();
+    }
+
+    public static List<Long> toLong(List<BigInteger> bigIntegers) {
+        List<Long> result = new ArrayList<>();
+        for (BigInteger bigInteger : bigIntegers) {
+            result.add(bigInteger.longValue());
+        }
+
+        return result;
     }
 }

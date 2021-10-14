@@ -1,10 +1,10 @@
 package com.epam.esm.service;
 
-import com.epam.esm.dto.TagCostDto;
 import com.epam.esm.entity.Tag;
 import com.epam.esm.exception.ResourceAlreadyExistsException;
 import com.epam.esm.exception.ResourceNotFoundException;
 import com.epam.esm.hibernate.TagDao;
+import com.epam.esm.hibernate.UserOrderDao;
 import com.epam.esm.validator.TagValidator;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -12,19 +12,21 @@ import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class TagServiceTest {
 
     private final TagDao tagDao = Mockito.mock(TagDao.class);
+    private final UserOrderDao userOrderDao = Mockito.mock(UserOrderDao.class);
     private final TagValidator tagValidator = Mockito.mock(TagValidator.class);
-    private final TagService tagService = new TagService(tagDao, tagValidator);
+    private final TagService tagService = new TagService(tagDao, userOrderDao, tagValidator);
 
     private final List<Tag> tags = new ArrayList<>();
     private final Tag tag = new Tag();
     private final long tagId = 1L;
-    private final long userId = 2L;
     private final String name = "tag";
     private final Optional<Tag> optionalTag = Optional.of(tag);
 
@@ -86,23 +88,16 @@ public class TagServiceTest {
     }
 
     @Test
-    public void testShouldGetMostWidelyUsedTagOfUserWithHighestCostOfOrders() {
-        TagCostDto tagCost = new TagCostDto();
-        Optional<TagCostDto> optionalTagCost = Optional.of(tagCost);
-        Mockito.when(tagDao.getMostWidelyUsedTagOfUserWithHighestCostOfOrders(userId)).thenReturn(optionalTagCost);
+    public void testShouldGetMostWidelyUsedTagsOfUsersWithHighestCostOfOrders() {
+        long userId = 2L;
+        Mockito.when(userOrderDao.getIdsOfUsersWithHighestCostOfOrders()).thenReturn(Collections.singletonList(userId));
+        Mockito.when(tagDao.getMostWidelyUsedTagsOfUserWithHighestCostOfOrders(userId)).thenReturn(tags);
+        Map<Long, List<Tag>> expected = new HashMap<>();
+        expected.put(userId, tags);
 
-        TagCostDto actual = tagService.getMostWidelyUsedTagOfUserWithHighestCostOfOrders(userId);
+        Map<Long, List<Tag>> actual = tagService.getMostWidelyUsedTagsOfUsersWithHighestCostOfOrders();
 
-        Assertions.assertEquals(tagCost, actual);
-    }
-
-    @Test
-    public void testShouldThrowExceptionWhenMostWidelyUsedTagWasNotFound() {
-        Assertions.assertThrows(ResourceNotFoundException.class, () -> {
-            Mockito.when(tagDao.getMostWidelyUsedTagOfUserWithHighestCostOfOrders(userId)).thenReturn(Optional.empty());
-
-            tagService.getMostWidelyUsedTagOfUserWithHighestCostOfOrders(userId);
-        });
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test

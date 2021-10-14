@@ -8,10 +8,10 @@ public class GiftCertificateQueryConstructor {
     private static final String AND = " AND ";
     private static final String WHERE = " WHERE ";
 
-    public GiftCertificateQueryConstructor() {
+    private GiftCertificateQueryConstructor() {
     }
 
-    public String constructQueryForGettingIdsOfGiftCertificatesWithAndConditionConnectionToTags(String[] tagNames) {
+    public static String getIdsOfGiftCertificatesWithAndConnectionToTags(String[] tagNames) {
         StringBuilder stringBuilder = new StringBuilder();
 
         if (tagNames != null && tagNames.length > 0) {

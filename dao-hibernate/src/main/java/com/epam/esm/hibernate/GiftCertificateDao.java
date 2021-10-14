@@ -27,14 +27,10 @@ import java.util.Set;
 public class GiftCertificateDao implements Dao<GiftCertificate> {
 
     private final EntityManager entityManager;
-    private final GiftCertificateQueryConstructor giftCertificateQueryConstructor;
 
     private static final String GET_ALL_WITH_PAGINATION = "SELECT ID, NAME, DESCRIPTION, PRICE, DURATION, CREATE_DATE, LAST_UPDATE_DATE FROM GIFT_CERTIFICATE LIMIT :LIMIT OFFSET :OFFSET";
     private static final String GET_ALL_WITHOUT_PAGINATION = "SELECT ID, NAME, DESCRIPTION, PRICE, DURATION, CREATE_DATE, LAST_UPDATE_DATE FROM GIFT_CERTIFICATE ";
-    private static final String GET_BY_ID = "SELECT ID, NAME, DESCRIPTION, PRICE, DURATION, CREATE_DATE, LAST_UPDATE_DATE FROM GIFT_CERTIFICATE WHERE ID = :ID";
-    private static final String CREATE = "INSERT INTO GIFT_CERTIFICATE(NAME, DESCRIPTION, PRICE, DURATION, CREATE_DATE, LAST_UPDATE_DATE) VALUES(:NAME, :DESCRIPTION, :PRICE, :DURATION, :CREATE_DATE, :LAST_UPDATE_DATE)";
     private static final String UPDATE = "UPDATE GIFT_CERTIFICATE SET ";
-    private static final String DELETE = "DELETE FROM GIFT_CERTIFICATE WHERE ID = :ID";
 
     private static final String WHERE = " WHERE ";
     private static final String AND = " AND ";
@@ -45,9 +41,8 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
     private static final String CLOSING_BRACKET = ") ";
 
     @Autowired
-    public GiftCertificateDao(EntityManager entityManager, GiftCertificateQueryConstructor giftCertificateQueryConstructor) {
+    public GiftCertificateDao(EntityManager entityManager) {
         this.entityManager = entityManager;
-        this.giftCertificateQueryConstructor = giftCertificateQueryConstructor;
     }
 
     /**
@@ -87,8 +82,8 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
         }
 
         if (tagNames != null && tagNames.length > 0) {
-            String queryWithTagsAndConditionConnection = giftCertificateQueryConstructor
-                    .constructQueryForGettingIdsOfGiftCertificatesWithAndConditionConnectionToTags(tagNames);
+            String queryWithTagsAndConditionConnection = GiftCertificateQueryConstructor
+                    .getIdsOfGiftCertificatesWithAndConnectionToTags(tagNames);
 
             if (queryWithSearchInfo.isEmpty()) {
                 stringBuilder.append(WHERE);
@@ -103,7 +98,7 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
                     .append(CLOSING_BRACKET);
         }
 
-        String sortingQuery = SqlUtils.applySorting(searchInfo.getFieldForSorting(), searchInfo.getAscending());
+        String sortingQuery = SqlUtils.applySorting(searchInfo.getFieldForSorting(), searchInfo.isAscending());
         stringBuilder.append(sortingQuery);
 
         String paginationQuery = SqlUtils.applyPagination(limit, offset);
@@ -122,12 +117,8 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
      * @return {@link Optional} with a {@link GiftCertificate} object if it was found in a database.
      */
     public Optional<GiftCertificate> getById(long id) {
-        GiftCertificate result = (GiftCertificate) entityManager
-                .createNativeQuery(GET_BY_ID, GiftCertificate.class)
-                .setParameter(GiftCertificateConstants.ID, id)
-                .getSingleResult();
-
-        return Optional.of(result);
+        GiftCertificate result = entityManager.find(GiftCertificate.class, id);
+        return Optional.ofNullable(result);
     }
 
     /**
@@ -140,18 +131,10 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
         EntityTransaction transaction = entityManager.getTransaction();
 
         transaction.begin();
-        entityManager
-                .createNativeQuery(CREATE)
-                .setParameter(GiftCertificateConstants.NAME, giftCertificate.getName())
-                .setParameter(GiftCertificateConstants.DESCRIPTION, giftCertificate.getDescription())
-                .setParameter(GiftCertificateConstants.PRICE, giftCertificate.getPrice())
-                .setParameter(GiftCertificateConstants.DURATION, giftCertificate.getDuration())
-                .setParameter(GiftCertificateConstants.CREATE_DATE, giftCertificate.getCreateDate())
-                .setParameter(GiftCertificateConstants.LAST_UPDATE_DATE, giftCertificate.getLastUpdateDate());
-        GiftCertificate createdGiftCertificate = entityManager.merge(giftCertificate);
+        entityManager.persist(giftCertificate);
         transaction.commit();
 
-        return createdGiftCertificate.getId();
+        return giftCertificate.getId();
     }
 
     /**
@@ -170,13 +153,14 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
     /**
      * Deletes a {@link GiftCertificate} object in a database by its id.
      *
-     * @param id - the {@link GiftCertificate} object's id that is to be deleted in a database.
+     * @param giftCertificate - the {@link GiftCertificate} object is to be deleted in a database.
      */
-    public void delete(long id) {
-        entityManager
-                .createNativeQuery(DELETE)
-                .setParameter(GiftCertificateConstants.ID, id)
-                .executeUpdate();
+    public void delete(GiftCertificate giftCertificate) {
+        EntityTransaction transaction = entityManager.getTransaction();
+
+        transaction.begin();
+        entityManager.remove(giftCertificate);
+        transaction.commit();
     }
 
     private void checkFieldExistence(String fieldName, List<String> fields) {

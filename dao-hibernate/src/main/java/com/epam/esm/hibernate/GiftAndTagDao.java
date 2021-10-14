@@ -2,10 +2,12 @@ package com.epam.esm.hibernate;
 
 import com.epam.esm.entity.GiftCertificate;
 import com.epam.esm.entity.Tag;
+import com.epam.esm.util.SqlUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityTransaction;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +49,7 @@ public class GiftAndTagDao {
                 .setParameter(CERTIFICATE_ID, certificateId)
                 .getResultList();
 
-        return toLong(tagIds);
+        return SqlUtils.toLong(tagIds);
     }
 
     /**
@@ -62,7 +64,7 @@ public class GiftAndTagDao {
                 .setParameter(TAG_ID, tagId)
                 .getResultList();
 
-        return toLong(certificateIds);
+        return SqlUtils.toLong(certificateIds);
     }
 
     /**
@@ -72,11 +74,15 @@ public class GiftAndTagDao {
      * @param tagId - {@link Tag} id.
      */
     public void create(Long certificateId, Long tagId) {
+        EntityTransaction transaction = entityManager.getTransaction();
+
+        transaction.begin();
         entityManager
                 .createNativeQuery(CREATE)
                 .setParameter(CERTIFICATE_ID, certificateId)
                 .setParameter(TAG_ID, tagId)
                 .executeUpdate();
+        transaction.commit();
     }
 
     /**
@@ -86,19 +92,14 @@ public class GiftAndTagDao {
      * @param tagId - {@link Tag} id.
      */
     public void delete(Long certificateId, Long tagId) {
+        EntityTransaction transaction = entityManager.getTransaction();
+
+        transaction.begin();
         entityManager
                 .createNativeQuery(DELETE)
                 .setParameter(CERTIFICATE_ID, certificateId)
                 .setParameter(TAG_ID, tagId)
                 .executeUpdate();
-    }
-
-    private List<Long> toLong(List<BigInteger> bigIntegers) {
-        List<Long> result = new ArrayList<>();
-        for (BigInteger bigInteger : bigIntegers) {
-            result.add(bigInteger.longValue());
-        }
-
-        return result;
+        transaction.commit();
     }
 }

@@ -76,12 +76,10 @@ public class GiftCertificateController {
                                                  @RequestParam(required = false) String[] tagNames,
                                                  @RequestParam int limit,
                                                  @RequestParam int offset) {
-        List<GiftCertificate> giftCertificates;
-        if (searchInfo == null) {
-            giftCertificates = giftCertificateService.getAll(limit, offset);
-        } else {
-            giftCertificates = giftCertificateService.getGiftCertificates(searchInfo, tagNames, limit, offset);
-        }
+        List<GiftCertificate> giftCertificates =
+                (searchInfo == null)
+                ? giftCertificateService.getAll(limit, offset)
+                : giftCertificateService.getGiftCertificates(searchInfo, tagNames, limit, offset);
 
         for (GiftCertificate giftCertificate : giftCertificates) {
             addGenericGiftCertificateLinks(giftCertificate);

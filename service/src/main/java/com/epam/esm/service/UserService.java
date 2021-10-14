@@ -75,8 +75,8 @@ public class UserService implements com.epam.esm.service.Service<User> {
     @Transactional
     public void delete(long id) {
         Optional<User> optionalUser = userDao.getById(id);
-        optionalUser.orElseThrow(() -> new ResourceNotFoundException(GenericExceptionMessageConstants.RESOURCE_NOT_FOUND, USER));
+        User user = optionalUser.orElseThrow(() -> new ResourceNotFoundException(GenericExceptionMessageConstants.RESOURCE_NOT_FOUND, USER));
 
-        userDao.delete(id);
+        userDao.delete(user);
     }
 }

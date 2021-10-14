@@ -31,7 +31,7 @@ public class SearchInfoDto {
         this.ascending = ascending;
     }
 
-    public Boolean getAscending() {
+    public Boolean isAscending() {
         return ascending;
     }
 }

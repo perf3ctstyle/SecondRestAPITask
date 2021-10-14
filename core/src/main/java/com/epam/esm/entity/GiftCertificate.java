@@ -1,5 +1,7 @@
 package com.epam.esm.entity;
 
+import com.epam.esm.audit.AuditListener;
+import com.epam.esm.constant.GiftCertificateConstants;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -8,6 +10,8 @@ import org.springframework.hateoas.RepresentationModel;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -16,12 +20,17 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+
+import static com.epam.esm.constant.GenericConstants.DATE_TIME_PATTERN;
 
 @Entity
 @Table(name = "gift_certificate")
-public class GiftCertificate extends RepresentationModel<GiftCertificate> {
+@EntityListeners(AuditListener.class)
+public class GiftCertificate extends RepresentationModel<GiftCertificate> implements Identifiable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,11 +49,9 @@ public class GiftCertificate extends RepresentationModel<GiftCertificate> {
     @Column(name = "last_update_date", columnDefinition = "VARCHAR(30)")
     private LocalDateTime lastUpdateDate;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "gift_and_tag", joinColumns = @JoinColumn(name = "certificate_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
     private List<Tag> tags;
-
-    private static final String DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS";
 
     public GiftCertificate() {
     }
@@ -85,6 +92,7 @@ public class GiftCertificate extends RepresentationModel<GiftCertificate> {
         this.id = id;
     }
 
+    @Override
     public Long getId() {
         return id;
     }
@@ -146,6 +154,31 @@ public class GiftCertificate extends RepresentationModel<GiftCertificate> {
     @JsonProperty
     public List<Tag> getTags() {
         return tags;
+    }
+
+    public Map<String, String> toMapNotNullFields() {
+        Map<String, String> presentFields = new HashMap<>();
+
+        if (name != null) {
+            presentFields.put(GiftCertificateConstants.NAME, name);
+        }
+        if (description != null) {
+            presentFields.put(GiftCertificateConstants.DESCRIPTION, description);
+        }
+        if (price != null) {
+            presentFields.put(GiftCertificateConstants.PRICE, price.toString());
+        }
+        if (duration != null) {
+            presentFields.put(GiftCertificateConstants.DURATION, duration.toString());
+        }
+        if (createDate != null) {
+            presentFields.put(GiftCertificateConstants.CREATE_DATE, createDate.toString());
+        }
+        if (lastUpdateDate != null) {
+            presentFields.put(GiftCertificateConstants.LAST_UPDATE_DATE, lastUpdateDate.toString());
+        }
+
+        return presentFields;
     }
 
     @Override

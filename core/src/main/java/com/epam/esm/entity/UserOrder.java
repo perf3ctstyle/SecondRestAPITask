@@ -1,11 +1,13 @@
 package com.epam.esm.entity;
 
+import com.epam.esm.audit.AuditListener;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.hateoas.RepresentationModel;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -15,7 +17,8 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "user_order")
-public class UserOrder extends RepresentationModel<UserOrder> {
+@EntityListeners(AuditListener.class)
+public class UserOrder extends RepresentationModel<UserOrder> implements Identifiable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -55,6 +58,7 @@ public class UserOrder extends RepresentationModel<UserOrder> {
         this.id = id;
     }
 
+    @Override
     public Long getId() {
         return id;
     }
