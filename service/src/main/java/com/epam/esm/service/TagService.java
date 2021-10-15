@@ -113,64 +113,6 @@ public class TagService implements com.epam.esm.service.Service<Tag> {
     }
 
     /**
-     * Creates {@link Tag} objects in a database or throws {@link RequiredFieldMissingException} if some fields
-     * required for creation are missing.
-     *
-     * @param tags - {@link Tag} objects that are to be created in a database if they have not been created already.
-     * @return {@link List} of {@link Tag} ids in the same order as the one in the method parameter.
-     */
-    public List<Long> createTagsIfNotCreated(List<Tag> tags) {
-        List<Long> ids = new ArrayList<>();
-
-        if (tags == null) {
-            return ids;
-        }
-
-        for (Tag tag : tags) {
-            tagValidator.validateForCreation(tag);
-
-            String tagName = tag.getName();
-            Optional<Tag> optionalTag = tagDao.getByName(tagName);
-
-            if (!optionalTag.isPresent()) {
-                Tag tagToCreate = new Tag(null, tagName);
-
-                Long id = tagDao.create(tagToCreate);
-                ids.add(id);
-            } else {
-                Tag tagFromDatabase = optionalTag.get();
-
-                Long id = tagFromDatabase.getId();
-                ids.add(id);
-            }
-        }
-
-        return ids;
-    }
-
-    /**
-     * Returns {@link Tag} objects from a database by their id or throws {@link DaoException} in the case of unexpected behaviour
-     * on a Dao level.
-     *
-     * @param tagIds - the {@link Tag} objects ids that are to be retrieved from a database.
-     * @return {@link List} of {@link Tag} objects.
-     */
-    public List<Tag> getTagsByListOfIds(List<Long> tagIds) {
-        List<Tag> tags = new ArrayList<>();
-
-        if (tagIds == null) {
-            return tags;
-        }
-
-        tagIds.forEach(tagId -> {
-            Optional<Tag> optionalTag = tagDao.getById(tagId);
-            optionalTag.ifPresent(tags::add);
-        });
-
-        return tags;
-    }
-
-    /**
      * Deletes a {@link Tag} object in a database by its id or throws {@link ResourceNotFoundException} if the object
      * with such id doesn't exist.
      *
@@ -182,5 +124,24 @@ public class TagService implements com.epam.esm.service.Service<Tag> {
         Tag tag = optionalTag.orElseThrow(() -> new ResourceNotFoundException(GenericExceptionMessageConstants.RESOURCE_NOT_FOUND, TAG));
 
         tagDao.delete(tag);
+    }
+
+    /**
+     * Returns persisted {@link Tag} objects if they exist in a database or themselves if they do not exist
+     * or throws {@link DaoException} in the case of unexpected behaviour on a Dao level.
+     *
+     * @param tags - the {@link Tag} objects that are to be checked for persistence in a database.
+     * @return {@link List} of {@link Tag} objects.
+     */
+    public List<Tag> getPersistedTagsIfExist(List<Tag> tags) {
+        List<Tag> tagsToReturn = new ArrayList<>();
+
+        for (Tag tag : tags) {
+            Optional<Tag> optionalTag = tagDao.getByName(tag.getName());
+            Tag tagToReturn = optionalTag.orElse(tag);
+            tagsToReturn.add(tagToReturn);
+        }
+
+        return tagsToReturn;
     }
 }

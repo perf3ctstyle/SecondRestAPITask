@@ -100,7 +100,7 @@ public class UserOrderServiceTest {
     @Test
     public void testShouldDoNothingWhenDeleteExistingUserOrder() {
         Mockito.when(userOrderDao.getById(userOrderId)).thenReturn(optionalUserOrder);
-        Mockito.doNothing().when(userOrderDao).delete(userOrderId);
+        Mockito.doNothing().when(userOrderDao).delete(userOrder);
 
         userOrderService.delete(userOrderId);
     }

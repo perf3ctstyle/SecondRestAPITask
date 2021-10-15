@@ -1,7 +1,9 @@
 package com.epam.esm.hibernate;
 
+import com.epam.esm.constant.GenericExceptionMessageConstants;
 import com.epam.esm.constant.TagConstants;
 import com.epam.esm.entity.Tag;
+import com.epam.esm.exception.DaoException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -69,18 +71,24 @@ public class TagDao implements Dao<Tag> {
 
     /**
      * Returns a {@link Tag} object from a database by its name or throws
-     * {@link javax.persistence.NonUniqueResultException} in the case of unexpected behaviour.
+     * {@link DaoException} in the case of unexpected behaviour.
      *
      * @param name - the {@link Tag} object's name that is to be retrieved from a database.
      * @return {@link Optional} with a {@link Tag} object if it was found in a database.
      */
     public Optional<Tag> getByName(String name) {
-        Tag result = (Tag) entityManager
+        List<Tag> results = entityManager
                 .createNativeQuery(GET_BY_NAME, Tag.class)
                 .setParameter(TagConstants.NAME, name)
-                .getSingleResult();
+                .getResultList();
 
-        return Optional.of(result);
+        if (results.size() > 1) {
+            throw new DaoException(GenericExceptionMessageConstants.MORE_ENTITIES_THAN_EXPECTED);
+        } else if (results.size() == 1) {
+            return Optional.of(results.get(0));
+        } else {
+            return Optional.empty();
+        }
     }
 
     /**

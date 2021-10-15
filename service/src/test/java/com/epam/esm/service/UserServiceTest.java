@@ -72,7 +72,7 @@ public class UserServiceTest {
     @Test
     public void testShouldDoNothingWhenDeleteUser() {
         Mockito.when(userDao.getById(userId)).thenReturn(optionalUser);
-        Mockito.doNothing().when(userDao).delete(userId);
+        Mockito.doNothing().when(userDao).delete(user);
 
         userService.delete(userId);
     }

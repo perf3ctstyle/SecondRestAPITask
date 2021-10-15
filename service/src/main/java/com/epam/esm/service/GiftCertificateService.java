@@ -7,7 +7,6 @@ import com.epam.esm.entity.Tag;
 import com.epam.esm.exception.DaoException;
 import com.epam.esm.exception.RequiredFieldMissingException;
 import com.epam.esm.exception.ResourceNotFoundException;
-import com.epam.esm.hibernate.GiftAndTagDao;
 import com.epam.esm.hibernate.GiftCertificateDao;
 import com.epam.esm.util.DateTimeUtils;
 import com.epam.esm.validator.GiftCertificateValidator;
@@ -31,22 +30,19 @@ import static com.epam.esm.constant.GenericConstants.DATE_TIME_PATTERN;
 public class GiftCertificateService implements com.epam.esm.service.Service<GiftCertificate> {
 
     private final GiftCertificateDao giftCertificateDao;
-    private final TagService tagService;
-    private final GiftAndTagDao giftAndTagDao;
     private final GiftCertificateValidator giftCertificateValidator;
+    private final TagService tagService;
 
     private static final String GIFT_CERTIFICATE = "Gift Certificate";
     private static final String LAST_UPDATE_DATE = "last_update_date";
 
     @Autowired
     public GiftCertificateService(GiftCertificateDao giftCertificateDao,
-                                  TagService tagService,
-                                  GiftAndTagDao giftAndTagDao,
-                                  GiftCertificateValidator giftCertificateValidator) {
+                                  GiftCertificateValidator giftCertificateValidator,
+                                  TagService tagService) {
         this.giftCertificateDao = giftCertificateDao;
-        this.tagService = tagService;
-        this.giftAndTagDao = giftAndTagDao;
         this.giftCertificateValidator = giftCertificateValidator;
+        this.tagService = tagService;
     }
 
     /**
@@ -58,11 +54,7 @@ public class GiftCertificateService implements com.epam.esm.service.Service<Gift
      */
     public List<GiftCertificate> getAll(int limit, int offset) {
         checkPaginationParameters(limit, offset);
-
-        List<GiftCertificate> giftCertificates = giftCertificateDao.getAll(limit, offset);
-        setGiftCertificateTags(giftCertificates);
-
-        return giftCertificates;
+        return giftCertificateDao.getAll(limit, offset);
     }
 
     /**
@@ -80,10 +72,7 @@ public class GiftCertificateService implements com.epam.esm.service.Service<Gift
         SearchInfoDto searchInfoToUse = (searchInfo != null) ? searchInfo : new SearchInfoDto();
         String[] tagNamesToUse = (tagNames != null) ? tagNames : new String[0];
 
-        List<GiftCertificate> giftCertificates = giftCertificateDao.getGiftCertificates(searchInfoToUse, tagNamesToUse, limit, offset);
-        setGiftCertificateTags(giftCertificates);
-
-        return giftCertificates;
+        return giftCertificateDao.getGiftCertificates(searchInfoToUse, tagNamesToUse, limit, offset);
     }
 
     /**
@@ -95,12 +84,8 @@ public class GiftCertificateService implements com.epam.esm.service.Service<Gift
      */
     public GiftCertificate getById(long id) {
         Optional<GiftCertificate> optionalGiftCertificate = giftCertificateDao.getById(id);
-        GiftCertificate giftCertificate = optionalGiftCertificate.orElseThrow(
+        return optionalGiftCertificate.orElseThrow(
                 () -> new ResourceNotFoundException(GenericExceptionMessageConstants.RESOURCE_NOT_FOUND, GIFT_CERTIFICATE));
-
-        setGiftCertificateTags(giftCertificate);
-
-        return giftCertificate;
     }
 
     /**
@@ -118,15 +103,9 @@ public class GiftCertificateService implements com.epam.esm.service.Service<Gift
         giftCertificate.setCreateDate(currentDateTime);
         giftCertificate.setLastUpdateDate(currentDateTime);
 
-        long giftCertificateId = giftCertificateDao.create(giftCertificate);
+        persistGiftCertificateTagsIfExist(giftCertificate);
 
-        List<Tag> tags = giftCertificate.getTags();
-
-        if (tags != null && !(tags.isEmpty())) {
-            updateGiftsAndTags(giftCertificateId, tags);
-        }
-
-        return giftCertificateId;
+        return giftCertificateDao.create(giftCertificate);
     }
 
     /**
@@ -168,11 +147,9 @@ public class GiftCertificateService implements com.epam.esm.service.Service<Gift
         LocalDateTime lastUpdateDate = DateTimeUtils.nowOfPattern(DATE_TIME_PATTERN);
         giftCertificate.setLastUpdateDate(lastUpdateDate);
 
-        Map<String, String> fieldNameValueForUpdate = giftCertificate.toMapNotNullFields();
-        giftCertificateDao.update(id, fieldNameValueForUpdate);
+        persistGiftCertificateTagsIfExist(giftCertificate);
 
-        List<Tag> tags = giftCertificate.getTags();
-        updateGiftsAndTags(id, tags);
+        giftCertificateDao.update(giftCertificate);
     }
 
     /**
@@ -190,28 +167,9 @@ public class GiftCertificateService implements com.epam.esm.service.Service<Gift
         giftCertificateDao.delete(giftCertificate);
     }
 
-    private void setGiftCertificateTags(GiftCertificate giftCertificate) {
-        List<Long> tagIds = giftAndTagDao.getTagIdsByCertificateId(giftCertificate.getId());
-        List<Tag> tags = tagService.getTagsByListOfIds(tagIds);
-        giftCertificate.setTags(tags);
-    }
-
-    private void setGiftCertificateTags(List<GiftCertificate> giftCertificates) {
-        for (GiftCertificate giftCertificate : giftCertificates) {
-            setGiftCertificateTags(giftCertificate);
-        }
-    }
-
-    private void updateGiftsAndTags(long giftCertificateId, List<Tag> tags) {
-        List<Long> linkedTagIdsBeforeUpdate = giftAndTagDao.getTagIdsByCertificateId(giftCertificateId);
-        List<Long> tagIdsAfterUpdate = tagService.createTagsIfNotCreated(tags);
-
-        tagIdsAfterUpdate.stream()
-                .filter(tagId -> !linkedTagIdsBeforeUpdate.contains(tagId))
-                .forEach(tagId -> giftAndTagDao.create(giftCertificateId, tagId));
-
-        linkedTagIdsBeforeUpdate.stream()
-                .filter(linkedTagIdBeforeUpdate -> !tagIdsAfterUpdate.contains(linkedTagIdBeforeUpdate))
-                .forEach(linkedTagIdBeforeUpdate -> giftAndTagDao.delete(giftCertificateId, linkedTagIdBeforeUpdate));
+    private void persistGiftCertificateTagsIfExist(GiftCertificate giftCertificate) {
+        List<Tag> notPersistedTags = giftCertificate.getTags();
+        List<Tag> persistedTags = tagService.getPersistedTagsIfExist(notPersistedTags);
+        giftCertificate.setTags(persistedTags);
     }
 }

@@ -76,8 +76,7 @@ public class GiftCertificateController {
                                                  @RequestParam(required = false) String[] tagNames,
                                                  @RequestParam int limit,
                                                  @RequestParam int offset) {
-        List<GiftCertificate> giftCertificates =
-                (searchInfo == null)
+        List<GiftCertificate> giftCertificates = (searchInfo == null)
                 ? giftCertificateService.getAll(limit, offset)
                 : giftCertificateService.getGiftCertificates(searchInfo, tagNames, limit, offset);
 

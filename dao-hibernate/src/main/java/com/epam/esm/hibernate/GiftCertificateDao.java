@@ -151,6 +151,19 @@ public class GiftCertificateDao implements Dao<GiftCertificate> {
     }
 
     /**
+     * Updates a {@link GiftCertificate} object in a database by its id.
+     *
+     * @param giftCertificate - the {@link GiftCertificate} object that is to be updated in a database.
+     */
+    public void update(GiftCertificate giftCertificate) {
+        EntityTransaction transaction = entityManager.getTransaction();
+
+        transaction.begin();
+        entityManager.merge(giftCertificate);
+        transaction.commit();
+    }
+
+    /**
      * Deletes a {@link GiftCertificate} object in a database by its id.
      *
      * @param giftCertificate - the {@link GiftCertificate} object is to be deleted in a database.

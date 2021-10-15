@@ -1,6 +1,5 @@
 package com.epam.esm.config;
 
-import com.epam.esm.hibernate.GiftAndTagDao;
 import com.epam.esm.hibernate.GiftCertificateDao;
 import com.epam.esm.hibernate.TagDao;
 import com.epam.esm.hibernate.UserDao;
@@ -75,9 +74,8 @@ public class ApplicationConfig implements WebMvcConfigurer {
     @Bean
     public GiftCertificateService giftCertificateService(EntityManager entityManager) {
         return new GiftCertificateService(giftCertificateDao(entityManager),
-                tagService(entityManager),
-                giftAndTagDao(entityManager),
-                giftCertificateValidator());
+                giftCertificateValidator(),
+                tagService(entityManager));
     }
 
     @Bean
@@ -127,11 +125,6 @@ public class ApplicationConfig implements WebMvcConfigurer {
     @Bean
     public UserOrderValidator userOrderValidator() {
         return new UserOrderValidator();
-    }
-
-    @Bean
-    public GiftAndTagDao giftAndTagDao(EntityManager entityManager) {
-        return new GiftAndTagDao(entityManager);
     }
 
     @Bean(MESSAGE_SOURCE)

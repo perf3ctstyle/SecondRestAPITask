@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.Validate;
 import org.springframework.hateoas.RepresentationModel;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
@@ -49,8 +50,13 @@ public class GiftCertificate extends RepresentationModel<GiftCertificate> implem
     @Column(name = "last_update_date", columnDefinition = "VARCHAR(30)")
     private LocalDateTime lastUpdateDate;
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "gift_and_tag", joinColumns = @JoinColumn(name = "certificate_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    @ManyToMany(cascade =
+            {CascadeType.PERSIST,
+            CascadeType.MERGE},
+            fetch = FetchType.EAGER)
+    @JoinTable(name = "gift_and_tag",
+            joinColumns = @JoinColumn(name = "certificate_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id"))
     private List<Tag> tags;
 
     public GiftCertificate() {

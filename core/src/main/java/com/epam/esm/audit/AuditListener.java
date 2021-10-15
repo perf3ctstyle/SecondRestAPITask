@@ -41,7 +41,7 @@ public class AuditListener {
     }
 
     @PostPersist
-    private void beforePersisting(Identifiable identifiable) {
+    private void afterPersisting(Identifiable identifiable) {
         SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(this);
 
         AuditableEntity<?> auditable = createConcreteAuditableEntity(identifiable);
