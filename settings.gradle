@@ -1,0 +1,6 @@
+rootProject.name = 'SecondSpringApp'
+include 'web'
+include 'service'
+include 'core'
+include 'dao'
+include 'dao-hibernate'
